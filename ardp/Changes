@@ -1,0 +1,130 @@
+-*-text-*-
+This is a sketchy little list of changes to ARDP, from 5/96 to
+2/97.  From 8/96 to 2/97, most changes were registered here and some
+were registered in the Prospero distribution's Changes file.  Since
+8/96, all changes to ARDP and GOSTLIB have been recorded exclusively
+in the Prospero Changes file.  That Changes file is included with the
+ARDP distribution.
+
+5/29/96:  Changes made by Steve and Ari:
+
+Makefile.config.ardp-dist: now has ARDP_STANDALONE flag in it.
+Do not need to call ardp_initialize().
+
+
+Put standalones of these into lib/ardp/standalone.c
+* _pfs_debug (DONE)
+* _gl__function_internal_error_helper
+* _gl__fout_of_memory
+* _internal_error_handler
+_p_clear_errors
+* _p_th_arperrno
+
+
+
+
+Turned pfs_debug into ardp_debug (finally, been on TODO for over 2 years).
+
+pmachine.h, gl_log_msgtypes.h, mitra_macros.h: into ardp directory.
+
+ardp library compiles clean with 
+implicit_fixes.h: out of gostlib.  cleaned from ardp directory.  
+
+Now use -Igostlib, -Iardp to compile
+
+
+8/13/96, Katia, Santosh, & Steve.  also checking in change made last week.
+1) Updated Makefile.dependencies
+2) ardp.h can now be included multiple times correctly again (moved 
+	#endif ARDP_H_INCLUDED to real end of file)
+3) Added ARDP___CANONICALIZE_OUTPKT option (enabled by default)
+	and ardp___canonicalize_ptexts() macro.
+4) ardp_req_security() does nothing if ardp version < 1
+5) comment fixed in ardp_srv_ini.c
+
+
+
+9/9/96, swa: Fixed problem: ardp_abort(NOREQ) would dump core with at
+least one item in the ardp_activeQ.  (ardp_abort(NOREQ) is invoked by
+the handler set up by ardp_abort_on_int()).  Made changes to loop
+control structure; fixed typo.  All should work now.  Tested; seems
+OK.
+
+Changes to ARDP library, committed 12/13/96, Katia & Steve
+
+Have Class-of-Service tags in the Security Context
+working and debugged, both directions
+
+Added partial Kerberos support to ARDP Security Context; not 
+fully debugged.  Committing these changes to avoid too much version skew.
+
+Comments and documentation improved in a number of places, especially 
+ardp.h, ardp_accept.c, 
+
+Makefile.config.ardp has many new configuration options in it.
+
+Moved mutexes around and into the right places.  There were still
+some mutexes in libPFS that should be in libARDP.  This only affected
+multi-threaded code.
+
+All bcmp() became memcmp()
+
+Replaced some hand-crafted linked-list manipulation code with the appropriate macros.
+
+Added support for ARDP protocol option #9 (ARDP_CONTEXT_FAILURE).
+## end of 12/13/96 Changes
+
+Changes to ARDP library, committed 1/27/97, Steve Augart, done by steve.
+
+These implement changes suggested by Sung-Wook Ryu <ryu@ISI.EDU>.  
+
+Most important changes: We keep track of the next ARDP retransmission due, so
+that pending requests will still be retransmitted even if the programm
+(a simultaneous server and client) is busy calling ardp_get_nxt_all()
+or ardp_get_nxt_all_timeout().
+
+
+Comments fixed -- typos and semantics. 
+
+Remaining instances of time in second granularities converted 
+to "struct timeval" microsecond format.  zerotime constant.  
+
+ardp_get_nxt() now multithread-safe.
+
+New function interfaces:
+	struct timeval ardp__gettimeofday(void), 
+	int eq_timeval(struct timeval, struct timeval), 
+	int time_is_later(struct timeval, struct timeval), 
+	void ardp__adjust_backoff(struct timeval *), 
+	struct timeval add_times(struct timeval, struct timeval)
+	struct timeval subtract_timeval(struct timeval, struct timeval)
+	/* This will never return negative numbers; zero only. */
+	const struct timeval zerotime;
+	const struct timeval infinitetime;  /* otherwise illegal */
+
+ardp_int.h (internals) include file added, for internal functions,
+such as the new functions that do math on 'struct timeval'
+
+Added ardp_timeouts.c, next_activeQ_timeout.c, time.c
+
+
+Modular: added global UFACTOR constant as global.
+
+Changes to ARDP library, Committed 4 Feb 1997
+
+These changes were made as part of the Kerberos integration.  They do
+not completely work yet.
+
+1) Asymmetry added to ardp_req_security(): client arguments vs. server.
+Needed for Kerberos; the "me" argument can be 1 or 2.  Used in
+v_integrity_kerberos_md5_create(). 
+
+2) More md5 implementation; still not complete.
+
+3) Bug fixed in context processing.
+
+4) Various v1-rewrites.
+
+*Since February 1997, the changes have been listed instead in the top of the 
+Prospero distribution's Changes file. 
+

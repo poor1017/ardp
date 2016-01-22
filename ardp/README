@@ -1,0 +1,85 @@
+Release Notes for ARDP Release 1.1.
+
+Last Modified: (Time-stamp: <98/07/09 11:05:20 swa>)
+
+*What is ARDP, and why this distribution?
+
+The Asynchronous Reliable Delivery Protocol (ARDP) is a communication
+protocol.  We have made this distribution because we believe that ARDP
+is generally useful and addresses issues not addressed by other protocols.
+
+ARDP is designed for a request/response style of interaction, where in
+the common case, the client sends a request message to a server using
+as few packets as possible, and then receives a reply message from the
+server. The server can queue requests and send the packets composing
+the response message as data becomes available. In the meantime, the
+server can process other requests.  In the current implementation,
+each request message sent by a machine from a particular port has its
+own connection id.
+
+ARDP, which is layered on top of the Internet User Datagram Protocol
+(UDP), is designed so that in the common case, the additional overhead
+of guaranteeing reliability is as small as possible. In other words,
+ARDP's goal is to provide reliability without incurring the overhead
+of setting up/tearing down a TCP connection. Unless special processing
+is required, the header is kept small, and unless a packet is lost, no
+gadditional packets are sent.
+
+ARDP also optionally carries security information in the transport
+layer; this feature is useful to those wishing to quickly develop
+secure Internet services.
+
+The ARDP library is fully multi-threaded, both on the client and
+server sides.
+
+ARDP is currently used by systems such as the Prospero Directory
+Service, NetCheque, NetCash, and PPV.  
+
+*Documentation
+
+See the file ardp/doc in this distribution.  This directory includes a
+list of frequently asked questions, a protocol specification, and a
+full description of the ARDP API.  
+
+The most recent ARDP documentation is always available at
+the URL http://gost.isi.edu/info/ardp. 
+
+*How to INSTALL ARDP:
+
+See the file INSTALLATION in this directory.
+
+*Contact Information:
+
+Requests or queries about the release, including bug reports and suggestions
+for improving ARDP, should be sent to all four of these email
+addresses:
+
+	swa@ISI.EDU, salehi@ISI.EDU, katia@ISI.EDU, and bcn@ISI.EDU
+
+We are interested in co-operating with and supporting users who wish
+to embed ARDP in their own projects.
+
+*Credits and History.
+
+The first version of ARDP was written by Clifford Neuman while a
+graduate student at the University of Washington.  From 1993, Steven
+Augart wrote numerous incremental enhancements to ARDP.  From 1996 to
+1998, Steven Augart and Katia Obraczka rewrote much of ARDP as part of
+implementing the ARDP v1 protocol.  From 1997 to 1998, Nader Salehi
+and Steven Augart rewrote the multithreaded server support in ARDP and
+added support for multithreaded clients.
+
+*Distribution history.
+
+**ARDP version 1.1 (this version) adds support for multi-threaded
+clients.  It also features a rewriting of the multi-thread support to
+use the POSIX thread standard directly.  We used to use a more generic
+mechanism; this mechanism provided wrapper functions that allowed one
+to call various underlying thread packages.  This support is no longer
+needed with the wide availability of implementations of the full POSIX
+threads standard.
+
+**ARDP version 1.0 was the first free-standing distribution of ARDP.
+
+**Versions of ARDP before 1.0 were only distributed as part of the
+Prospero Directory Service.

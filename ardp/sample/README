@@ -1,0 +1,129 @@
+-*-outline-*-
+Last Updated Time-stamp: <98/07/14 18:11:07 salehi>
+Version Control Header: $Header: /nfs/gost/CVSroot/prospero/lib/ardp/sample/README,v 1.5 1998/07/15 22:56:43 swa Exp $
+This file is ardp/sample/README
+
+*Summary
+This directory, "ardp/sample", contains sample clients and servers
+that use ARDP.
+
+The sample client is 'client' and the sample server is 'server'.
+Their behavior can be modified by editing sample.h.
+
+**Simple Example
+
+The sample client will generate some number (specified by the -m flag) of 
+messages.  For each message, it sends an ARDP request to the server
+and waits for a reply.  It handles all ARDP errors, such as message
+timeouts, appropriately.
+
+The sample server will start up and run forever (well, until you kill
+it).  It listens for ARDP requests and replies to them.
+
+**Complex Example (Security contexts)
+
+This client and server is configured by default to demonstrate the security
+contexts supported by ARDP Version 1.
+
+Here, on each iteration the client will also send to the server the
+information associated with the security context type that it has. The client
+then waits for a reply.  It also handles all ARDP errors, such as message
+timeouts, missing security context attributes etc. appropriately.
+
+The following is the information associated with each security context
+that we demonstrate:
+      * authentication_kerberos:  cached credentials for a successfully
+                                  authenticated kerberos principal.
+      * labels_class_of_service:  the tag value associated with class
+                                  of service.
+      * integrity_crc:            CRC checksum for the correctly verified
+             
+
+The sample server listens for ARDP requests and replies to them appropriately,
+demonstrating the security type information associated with each context.
+
+**Complex Example: Multithreaded clients and servers
+
+You can compile ARDP to support multithreaded clients and servers;
+follow the instructions in Makefile.config.ardp.  This sample
+directory includes a multithreaded client and multithreaded server,
+which take advantage of the multithreading facilities.    They are
+called 'mt-client' and 'mt-server'
+
+You can tell the multi-threaded client how many threads to use by
+specifying the '-t' option.  You can compare performance of the
+multi-threaded client and  the single-threaded client's performace by
+using the analagous '-p' (# of processes) flag with the
+single-threaded client.
+
+*Compilation instructions:
+
+You need to already have a compiled version of the ARDP and GOST
+libraries.  In addition, you need to have the ARDP and GOST include
+files available.
+
+This is intended to stand independent of Prospero, unlike many of the
+programs we distribute.  That is to say, with just the ARDP and GOST
+libraries and include files, you should be able to make everything
+work.
+
+The default Makefile is designed to incorporate configuration
+information from the file Makefile.config.ardp in the ARDP
+distribution.  However, it can also be configured standalone, if you
+just have the libraries and include files, but no source tree.  
+
+	Edit the Makefile; see comments in the Makefile
+	If you want to use a different port than the default 4008, set
+		the value of SAMPLE_DEFAULT_ARDP_PORT in sample.h.
+	  You can also call the programs at runtime with the option
+	  "-pcardp.peer_ardp_port:{value}", where {value} is the port
+	  you want. 
+	Type "make".
+
+**Simple Example
+To make the simple example, comment out this line in the Makefile:
+	CFLAGS +=-DDEMONSTRATE_SECURITY_CONTEXT
+
+You will also need to provide appropriate Kerberos information, either
+in the Makefile.config.ardp or in the sample Makefile.
+
+**Complex Example: Multithreaded clients and servers
+
+To make the multithreaded client and server, type "make mt-all".  They
+won't compile successfully if you don't have a multithread-capable
+ARDP library.
+
+*Running instructions
+
+**Simple case
+
+I would recommend running the client and server in different windows
+on the same host.  In the default case, with just the argument '-m1',
+the client will send one message to a server on the same host that the
+client is on.  To change the host the client sends to or the port that
+the client and server use, edit the "sample.h" file in this directory.
+
+If you run the client or server with the -D9 argument, then you'll get
+to see additional ARDP debugging information being displayed.  This is
+useful for understanding more about how the ARDP library and prototol work.
+
+**Complex example -- security contexts; Kerberos.
+
+In order to demonstrate the Kerberos authentication security context,
+the necessary Kerberos credentials need to be obtained by typing the
+following command to your shell prompt:
+
+	kinit your_name@YOUR.REALM
+        (enter the password as prompted.)
+
+Verify your credentials cache by the "klist" command.
+
+
+*Credits:
+
+Originally contributed by Ari Medvinski and Wenhui Gao.
+Rewritten by Steve Augart. 
+Updated by Steve Augart and Tanya Ryutov, 6/97
+Updated by Steve Augart and Gayatri Chugh, 10/97
+Updated by Steve Augart 1/98
+Updated for multithreading, Nader Salehi and Steve Augart 6/98--7/98

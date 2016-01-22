@@ -1,0 +1,704 @@
+<!Comment! Updated 3/13/98, Steve Augart and Katia Obraczka>
+<TITLE> ARDP Library Interface Description </TITLE>
+<H1> ARDP Library Interface Description</H1>
+
+Below we provide a description of the interfaces to the ARDP library.
+
+<P>
+The ARDP v1 API (which is implemented and distributed as ARDP Release
+1.0) is a superset of the ARDP v0 API.
+<P>
+This page's documentation covers the ARDP Version 0
+facilities in the Prospero 5.3 release.  Programmers using ARDP
+release 1.0 or Prospero release 5.4 will also want to read <A
+HREF="http://gost.isi.edu/info/ardp/ardp_api_v1.html"> ARDP - API
+(Version 1)</A>.
+<P>
+Functions in the library that are not described here should be 
+considered internal and should not be called by the application. 
+In the functions that follow, more documentaton can be found in the 
+header preceding the function in the source code. 
+
+<P>
+<h2>ARDP Errors</h2>
+<P>
+Many functions are listed as returning an <tt>ardp_errcode</tt>.  In
+the Prospero 5.3 release, this is actually an <tt>int</tt>; the
+type was changed to <tt>ardp_errcode</tt>, a typedef for <tt>enum
+ardp_errcode</tt>, in later releases.  These errors, taken from
+<tt>ardp.h</tt>, are as follows.  The numeric values should not be relied
+upon; use the symbolic names instead:
+<P>
+<pre>
+/* ARDP library error status codes. */
+/* These must remain in the range 0-20 for compatibility with the Prospero
+   File System. */
+/* Note that ARDP_SUCCESS must remain 0, due to code implementation. */
+enum ardp_errcode {
+    ARDP_SUCCESS = 0,		/* Successful completion of call    */
+    ARDP_PORT_UNKN = 1,		/* UDP port unknown                 */
+    ARDP_UDP_CANT = 2,		/* Can't open local UDP port        */
+    ARDP_BAD_HOSTNAME = 3,	/* Can't resolve hostname           */
+    ARDP_NOT_SENT = 4,		/* Attempt to send message failed   */
+    ARDP_SELECT_FAILED = 5,	/* Select failed	            */
+    ARDP_BAD_RECV = 6,		/* Recvfrom failed 	            */
+    ARDP_BAD_VERSION = 7,       /* bad version # in rdgram protocol */
+    ARDP_BAD_REQ = 8,		/* Inconsistent request structure   */
+    ARDP_TIMEOUT = 9,		/* Timed out - retry count exceeded */
+    ARDP_REFUSED = 10,		/* Connection refused by server     */
+    ARDP_FAILURE = 11,		/* Unspecified ARDP failure         */
+    ARDP_TOOLONG = 12,		/* Buffer too long for packet       */
+    ARDP_TIMER_FAILED = 13,	/* A call to gettimeofday() failed.
+				   (this is ARI's addition; I'm not
+				   sure that it's needed --swa) */
+    ARDP_CRITICAL_CONTEXT_NOT_SUPPORTED = 14, /* for ardp-v1 contexts */
+    ARDP_CRITICAL_SERVICE_FAILED = 15,
+    ARDP_CONTEXT_FAILURE = 16,	/* more general than the CONTEXT ones above;
+				   more specific than ARDP_FAILURE (or
+				   ARDP_REFUSED, in some situations)  */
+};
+
+typedef enum ardp_errcode ardp_errcode;
+</pre>
+<P>
+<h2>ARDP client functions</h2>
+<P>
+The following functions are exported by the ARDP library for use by
+the client side of a connection:
+
+<!C! Documentation conventions:  function names are STRONG, arguments
+are in typewriter text TT>
+<UL>
+
+  <LI> <tt>void</tt> <STRONG> ardp_abort(<tt>RREQ req</tt>) </STRONG>: 
+       Aborts the specified request, sending an
+       abort message to the server if currently
+       active.  If <tt>req</tt> is null,<strong>ardp_abort</strong>
+       will send aborts to servers for all active requests. </LI>
+<P>
+
+  <LI> <STRONG> ardp_abort_on_int(<tt>void</tt>) </STRONG>:
+        Sets interrupt handler to abort any 
+       pending requests. </LI>
+<P>
+
+<LI><STRONG>int ardp_priority</STRONG>:  Default priority for outgoing ARDP requests.  Default is 0.  
+The default priority can be overridden for a particular connection by setting the <tt>priority</tt> member of the associated RREQ structure.
+<P>
+</LI>
+
+<P>
+
+  <LI> <STRONG> ardp_process_active() </STRONG>: 
+       Processes new responses to active requests.
+       If making an asynchronous request (i.e. if the ttwait passed to 
+	ardp_send() 
+       does not equal ARDP_WAIT_TILL_TO), then this
+       function must be called periodically, either
+       automatically within ardp_retrieve, explicitly, 
+       or initiated by an interrupt when
+       a response becomes available on the UDP port. 
+	This functions is also used on the server side.  Normally a
+        server does not call it directly, since it is automatically called
+        by the <strong>ardp_retrieve<i>*</i>()</strong> family of functions</LI>
+<P>
+
+  <LI> <STRONG>int ardp_retrieve(RREQ req,int ttwait) </STRONG>: 
+       Poll for, or wait <strong>ttwait</strong> microseconds for the
+        pending request <strong>req</strong> to complete.  If <strong>ttwait</strong> is
+        -1, <strong>ardp_retrieve()</strong> blocks.  
+       <strong>req</strong> is normally a pointer to an outstanding 
+	ARDP request.   ardp_retrieve() returns an error code.   The
+	successfully completed request <tt>req</tt> is removed from
+	the ardp_completeQ.  
+<P> Earlier versions of this documentation claimed that <tt>NOREQ</tt>
+is not acceptable as an argument to <tt>ardp_retrieve()</tt>.  In
+fact, passing <tt>NOREQ</tt> is a query about whether any requests
+have completed (successfully or unsuccessfully).  We return
+ARDP_SUCCESS if a complete request is available.  (However, unlike in
+the case where <it>req</it> is a specific request, we do not remove it
+from the completeQ.)
+<P>
+	ardp_retriev() will perform appropriate retransmissions for
+	all items on the <tt>ardp_activeQ</tt> if any timeouts occur
+	during the <strong>ttwait</strong> period.  (This was not the
+	case before February 1997). 
+<P>
+	Returns <tt>ARDP_BAD_REQ</tt> if called on an RREQ that is not
+	on the activeQ or the completeQ.  
+	If no request is ready when the timeout expires, returns
+	<tt>ARDP_PENDING</tt>. 
+
+  </LI>
+<P>
+
+  <LI> <STRONG>RREQ ardp_retrieve_nxt_nonblocking(void)</STRONG>:
+	Like calling ardp_retrieve(), but not specifying any request, 
+	and with no wait for a message.
+	Returns NOREQ or any completed message, if one is there.
+
+<P>
+	
+  <LI> <STRONG> ardp_send(req,dname,dest,ttwait) </STRONG>: 
+       Sends the request <tt>req</tt> to the host with domain name
+       <tt>dname</tt> or socket address <tt>dest</tt>, and waits
+       <strong>ttwait</strong> microseconds for a response.  
+       <tt>ttwait</tt> may also be the constant
+       <strong>ARDP_WAIT_TILL_TO</strong> (or -1); this means that
+       <strong>ardp_send()</strong> should wait until the ARDP protocol's
+       timeout happens. Passing <tt>ttwait</tt> as 0 means
+       <strong>ardp_retrieve()</strong> is not called and
+       <strong>ardp_send()</strong> returns immediately. </LI> 
+<P>
+
+
+  <LI> <STRONG> ardp_set_retry(to,rt) </STRONG>: 
+       Set retry initial time out (to <strong>to</strong> seconds).
+        Specify that you want <strong>rt</strong> retries.  Calling
+        this function is identical to the sequence of code:<br>
+<tt>ardp_config.default_timeout = <strong>to</strong>;<br>
+ardp_config.default_retry = <strong>rt</strong>;<br>
+</tt>
+        
+  </LI>
+
+</UL>
+
+<h2>ARDP server functions</h2><P>
+The following functions and variables are exported by the ARDP library for use by
+the server side of a connection:
+
+<UL>
+
+  <LI> <STRONG> ardp_accept() </STRONG>: 
+       Accepts new requests and places on appropriate
+       queues for subsequent processing.  This must be called
+       periodically, either explicitly, or initiated by an interrupt 
+       when a request becomes available on the UDP port. </LI>
+<P>
+	ardp_accept() does not block.  It does not call <strong>ardp_process_active()</strong>; keep this in mind if you are writing a program that acts as a client and as a server.
+<P>
+
+  <LI> <STRONG> ardp_bind_port(const char *portname) </STRONG>:
+       <strong>portname</strong> is the service name (in <tt>/etc/services</tt>) or number (a string in the format 
+	<tt>"#<i>decimal-port-number</i>"</tt>) of a port to be opened, on which the
+       server will listen for requests. </LI>
+<P>
+
+  <LI> <STRONG> RREQ ardp_get_nxt(<tt>void</tt>) </STRONG>: 
+       Returns the next request to be processed.
+       If none available, it will block until one is received.  Calls
+       <strong>ardp_accept()</strong>. 
+<P>
+	<strong>ardp_get_nxt()</strong> does not call <strong>ardp_process_active()</strong>.  It is not recommended that you use it if you are writing a program that acts as a client and as a server and there might be any outstanding (asynchronous) client requests. 
+</LI>
+<p>
+  <LI> <STRONG> RREQ ardp_get_nxt_nonblocking(void) </STRONG>:
+       Returns the next request to be processed.
+       If none available, it will return the constant
+       <STRONG>NOREQ</STRONG>.   Calls <strong>ardp_accept()</strong>.
+	Does not call <strong>ardp_process_active()</strong>
+</LI>
+
+<P>
+
+
+
+  <LI> <STRONG>int ardp_redirect(RREQ req, struct sockaddr_in *target) </STRONG>:
+       Sends a redirect to the client indicating the the request
+       <strong>req</strong> should be sent to a new target server
+       identified in the second argument.  For now, redirections
+       should only occur before any request packets have been
+       acknowledged, or response packets sent.  
+</LI>
+<P>
+
+  <LI> <STRONG> ardp_respond(RREQ req, int opt) </STRONG>: 
+       Used by a server to send the current response
+       packet once filled in.  It will add the packet 
+       to the transmission queue, and send it.  To
+       indicate completion of a response, the
+       ARDP_RESP_COMPLETE option should be specified.
+       If the ARDP_RESP_NOSEND option is specified,
+       the packet will be added to the transmission queue
+       but not sent. </LI>
+<P>
+
+  <LI> <STRONG> ardp_refuse(RREQ req) </STRONG>: 
+       Causes the request specified by <strong>req</strong> to be refused and
+       notification sent to the client. </LI>
+<P>
+
+  <LI> <STRONG> ardp_reply(RREQ req, int flags, const char *message) </STRONG>:
+       Queues message (appending it to the req structure)
+       and possibly sends it and other queued data to the
+       client.  Will call ardp_respond() if any
+       completed packets can be sent (i.e., sends a
+       partial response  to speed up client/server
+       interaction). Message is a null-terminated buffer.
+       Can't use this interface to send binary data
+       that might contain nulls;  see
+       <strong>ardp_breply()</strong> below.
+</LI>
+<P>
+                        
+   <LI> <STRONG> int ardp_breply(RREQ req, int flags, const char
+*message, int len)</strong>:
+	
+        Send a reply to a request; the reply might contain binary
+       data.
+
+       <strong>ardp_breply</strong> takes a request to which a reply
+       is to be sent,
+   	a flags field, the contents of the reply message,
+	   and a length count for the message.
+	<strong>ardp_breply()</strong>  then adds
+	 the response to the output queue for the request.
+
+	 A length count of 0 indicates that the buffer is null-terminated.
+	 (implementation note: by passing the 0 down to ardp_add2req, we
+	  allow there to be only one pass through the buffer instead of 2.)
+
+	If the ARDP_REPL_COMPLETE flag has been specified, all data is sent.
+ Otherwise, 
+ the response is buffered pending
+ subsequent calls to <strong>ardp_breply()</strong>. 
+ <strong>ardp_breply()</strong> immediately sends any full packets in
+the buffered response.
+
+ The lower level function (ardp_respond) assigns packet numbers and 
+ tags outgoing packets if necessary for a multi packet response.
+	
+<strong>ardp_reply()</strong>
+calls <strong>ardp_breply()</strong> internally.
+
+
+<P>
+	
+  <LI> <STRONG> ardp_rwait(RREQ req, int timetowait, int qpos, int stime) </STRONG>:
+       This function is called by a server to specify
+       a server requested time to wait for a response.  
+       This value is returned to the client which
+       will treat it as an acknowledgment and will
+       defer subsequent timeouts and retries until
+       waiting <strong>timetowait</strong> seconds.  Non-zero values
+       of qpos and stime will cause the current
+       the specified queue position and expected
+       system time to be provided to the client in
+       the same message. </LI>
+<P>
+
+  <LI> <STRONG> ardp_set_queuing_policy(int(*pf)(RREQ r1, r2),override) </STRONG>:
+       Sets a function used to determine queue
+       ordering on the server. </LI>
+<P>
+
+  <LI> <STRONG> ardp_set_prvport(int fd) </STRONG>: 
+       Sets a file descriptor that has already been
+       opened as the privileged input port on which the server
+       will listen for requests. </LI>
+<P>
+
+  <LI> <STRONG> int ardp_acknowledge(req) </STRONG>: 
+       Sends an acknowledgment message to the client indicating that
+       the server received a complete multi-packet request from the
+       client. 
+       </LI>
+<P>
+
+  <LI> <STRONG>char *          (*ardp_vlog)(int type, RREQ req, const char *format, va_list ap)</STRONG>  If you are writing a server and want the ARDP library to log information, you need to set this function-valued variable to some logging function.  Its initial value is NULL.
+	<strong>type</strong> is a logging message type specified in 
+<tt>gl_log_msgtypes.h</tt>.  <strong>req</strong> is the request which triggered this call to the logging function; it may be NOREQ.  <strong>format</strong> is a format string acceptable to the stdio library <strong>printf()</strong> function (or the gostlib <strong>qsprintf()</strong> function).  <strong>ap</strong> refers to the arguments to <strong>printf()</strong>.
+<P>
+
+<LI><STRONG>void     (*ardp_newly_received_additional)(RREQ nreq)</STRONG>:
+	This function-valued variable may be set if you wish additional processing to be performed (e.g., prioritization) on a complete ARDP request that the server has just received.  Its default value is NULL. </LI>
+<P>
+
+
+</UL>
+
+<h2>ARDP client and server interfaces</h2>
+The following functions are exported by the ARDP library for use
+by either the client and the server sides of a connection:
+
+<UL>
+ 
+  <LI> <STRONG> RREQ ardp_get_nxt_all(enum ardp_gna_rettype *rettype) </STRONG>: 
+        This function is intended to be used by programs which are
+        acting both as ARDP clients and as ARDP servers.
+        It acts as a combination of
+        <STRONG>ardp_get_nxt()</strong> and
+        <strong>ardp_retrieve()</strong>.  If it returned a response
+        (acted as <strong>ardp_retrieve()</strong>),
+        <strong>*rettype</strong> will be set to
+        <strong>ARDP_CLIENT_PORT</strong>.  If it returned a new
+        request for the server, <strong>*rettype</strong> will be set
+        to <strong>ARDP_SERVER_PORT</strong>.
+       If nothing available, it will block until one is received. 
+<p>
+	It blocks without calling <strong>ardp_process_active()</strong> appropriately.  No retransmissions occur until just before it returns.  If you don't want this to happen, then call <strong>ardp_get_nxt_all_timeout()</strong> with
+a <strong>ttwait</strong> argument of <strong>ARDP_WAIT_TILL_TO</strong>
+
+
+</LI>
+<P>
+
+  <LI> <STRONG> RREQ ardp_get_nxt_all_timeout(enum ardp_gna_rettype *rettype, 
+	int ttwait, int priority)</strong>
+
+	Acts as <tt>ardp_get_nxt_all()</tt>, with extensions:
+	<strong>ttwait</strong> specifies a timeout interval in
+        microseconds.  -1 (ARDP_WAIT_TILL_TO) means wait forever.  The client should set
+	<strong>priority</strong> to one of the two
+        distinguished values <strong>ARDP_CLIENT_PORT</strong> or
+        <strong>ARDP_SERVER_PORT</strong>.   This indicates whether
+        <strong>ardp_get_nxt_all_timeout()</strong> will first check the client port
+        for replies or the server port for new requests.
+<p>	
+	It calls <strong>ardp_process_active()</strong> appropriately.
+	</li>        
+<P>	
+	
+  <LI> <STRONG> void ardp_initialize(void) </STRONG>:
+     This function must be called before using the ARDP library.
+     It initializes <tt>ardp_config</tt>, the structure where the ARDP library looks for its
+     configuration information.  If you aren't using the pconfig
+routines in gostlib, you should still call <tt>ardp_initialize()</tt>, to keep
+<tt>ardp_config</tt> from being full of junk.
+<p>
+<tt>ardp_initialize()</tt> also initializes the ARDP library's MUTEXES; these
+are important for multi-threaded programs.
+<p>
+<tt>ardp_initialize()</tt> should not be called more than once during
+the program's execution.  (There is some code around that does call it
+more than once, or calls <tt>p_initialize()</tt> in Prospero more than
+once.  This was never correct, although it usually works.  It will
+break multi-threaded code.) 
+<P><tt>ardp_initialize()</tt> should be called after you have
+read in any command-line arguments with
+<tt>p_command_line_preparse(&argc, argv)</tt> (q.v.).  If you haven't
+called this, then an error may be signalled.  If you call
+<tt>p_command_line_preparse()</tt> too late, then an error may be
+signalled.  If you call <tt>ardp_initialize()</tt>, or a function that
+calls it, more than once, then an error may be signalled.  
+(The more robust thing to do would be to make it accept being
+called multiple times, and we plan to add that functionality when convenient.).
+<P>
+
+ 
+<P>
+  <LI> <STRONG> ardp_add2req(RREQ req, int flags, const char *buf, int len) </STRONG>:
+       Adds arbitrary data (including text) to a request which will 
+       subsequently
+       be sent to the peer, and returns. </LI>
+<P>
+
+  <LI> <STRONG> RREQ ardp_rqalloc(void) </STRONG>:  
+       Allocate a new request structure. If the user set an auxiliary
+       allocating-function  with <strong>ardp_rqappalloc()</strong>,
+       <strong>ardp_rqalloc()</strong> will set the new request's
+       <tt>app.ptr</tt> member to the return value from invoking that
+       function. </LI> <P>
+       
+
+  <LI> <STRONG>void ardp_rqappalloc(void * (* appallocfunc)(void))</strong>: see <strong>ardp_rqalloc()</strong>. </LI>
+<P>
+
+  <LI> <STRONG> ardp_rqfree(RREQ req) </STRONG>: 
+       Free a request structure.   If the user set an auxiliary
+       freeing-function  with <strong>ardp_rqappfree()</strong>,
+       <strong>ardp_rqfree()</strong> will invoke that function with
+       <strong>req</strong>'s <tt>app.ptr</tt> function as its argument.
+       </LI> <P>
+       
+  <LI> <STRONG>void ardp_rqappfree(void (* appfreefunc)(void
+       *))</strong>: see <strong>ardp_rqfree()</strong>. </LI>
+
+</LI>
+<P>
+
+ <LI> <STRONG>void ardp_rreq_to_in(RREQ rreq, INPUT in,
+       ardp_rreq_to_in_aux_INPUT in_aux)</strong>:
+	Lets you feed RREQ structures to the <tt>gl_parse</tt> family of
+       functions in <tt>gostlib</tt>.
+</li> <P>
+
+</UL>
+
+
+The following functions and variables are used internally by the ARDP
+library; we are mentioning them so that users of ARDP will not be
+confused by finding them in the ARDP source code and for the
+convenience of those wishing to do further ARDP development.  Some of
+them may also be useful to applications writers in special
+circumstances.
+
+<! XXX The following is inconsistent in its use of /li -- we really don't need it at all, Katia thinks 9/96. >
+
+<UL>
+   <li><strong>ardp_headers()</strong></li>: called by <strong>ardp_process_active()</strong> and <strong>ardp_send()</strong> before (re)transmitting packets.
+
+<P>
+
+   <li><strong>ardp_hostname2addr(const char *hostname, struct sockaddr_in *hostaddr)</strong>: called by <strong>ardp_send()</strong>.  This
+	 function serves as a thread-safe version of <strong>gethostbyname()</strong>;
+	 <strong>gethostbyname()</strong> is not a re-entrant function since it uses 
+	static data.  <strong>ardp_hostname2addr()</strong> also caches 
+	DNS values for efficiency.  It will cache up to <strong>DNSCACHE_MAX</strong> (constant defined in <tt>ardp.h</tt>) entries.
+<P>
+	
+   <li><tt>ardp_errcode</tt> <strong>ardp_hostname2name_addr(const
+   char *<i>hostname_arg</i>, char **<i>official_hnameGSP</i>, struct
+   sockaddr_in *<i>hostaddr_arg</i>)</strong>:
+   <br>
+   Called by <tt>ardp_hostname2addr()</tt>.  Thread-safe.  Returns the
+   host's address in <tt>hostaddr_arg</tt>, and the official hostname in
+   <tt>official_hnameGSP.  hostaddr_arg</tt> and
+   <tt>official_hnameGSP</tt> may be NULL pointers. 
+   It is defined and reasonable to call <tt>ardp_hostname2name_addr()</tt> with
+   both arguments NULL; this causes a lookup to be made and entered
+   into the cache.
+   <P>
+   We usually cache the official hostname as well.  This will also
+   cache numeric addresses, which can be useful.
+   <P> The <i>hostname_arg</i> may in one of the three forms:
+   <ul>
+	<li> 1) "<i>hostname</i>"
+	<li> 2) "<i>hostname</i><tt>:</tt><i>port-no</i>"
+	<li> 3) "<i>hostname</i><tt>(</tt><i>port-no</i><tt>)</tt>"
+   </ul>
+   If <i>port-no</i> is not specified (in the first form above), then
+   <tt>ardp_hostname2name_addr()</tt> will return with
+   <tt>hostaddr_arg->sin_port</tt> set to zero.  If <i>port-no</i> is
+   specified, then <tt>hostaddr_arg->sin_port</tt> will be set to the
+   decimal integer value of <i>port-no</i>. 
+   This function ignores <tt>ardp_config.default_port</tt> and
+   <tt>ardp_config.default_peer</tt>; those are examined at higher levels. 
+
+
+   <P>
+   <li> <tt>ardp_errcode</tt> <strong>ardp_init(void)</strong>:  Called by
+	<strong>ardp_send()</strong> to bind the port on which the
+	client listens for replies.  <!C! Until 9/96, it could not be called twice.>
+	<tt>ardp_init()</tt> may be called more than once.  The semantics 
+	are that on each subsequent call the old client port will be
+	closed and a new one opened and bound.  
+<p>
+	<TT>ardp_init()</tt> tries first to bind a privileged port.  It tries
+	up to <strong>ardp_config.num_privp</strong> ports, starting at 
+	<strong>ardp_config.first_privp</strong>, before giving up and
+	binding a non-privileged port. 
+
+	<P>
+	<strong>ardp_init()</strong> binds the port's address to the
+	hosts's IP address; if there is more than one IP interface on
+	the host, then the interface associated with the primary
+	hostname is used.  This means that all packets coming from the
+	host (even if they would normally be tagged with the address
+	of an alternate IP interface) will nevertheless be tagged with
+	the host's primary IP address.  Presumably, therefore, the
+	responses might be sent by an inefficient route back to the
+	'primary address' rather than to the appropriate IP address as
+	would normally be automatically selected by client's internal
+	routing table.
+	<P>
+	The bound port's IP Address and UDP port number are stored in 
+	 the global variable: <br> 
+	<tt>struct sockaddr_in </tt><strong>ardp_client_address_port</strong>.
+	<br>
+	This variable <!C! XXX which should be documented separately at some point,>
+	is all zeroes until <tt>ardp_init()</tt> sets it.
+	<P>	
+	The file descriptor of the newly bound port is in the global variable:<br>
+	<tt>int</tt> <strong>ardp_port</strong>
+	<br>
+
+	<strong>ardp_init()</strong> returns: 
+	<ul>
+		<li><strong>ARDP_UDP_CANT</strong> if one of the
+		socket system calls failed.  In this case,
+		<strong>ardp_client_address_port</strong> will also be
+		set to all zeroes and <strong>ardp_port</strong> will
+		retain its value of -1 (meaning
+		<i>uninitialized</i>). 
+
+		<li><strong>ARDP_SUCCESS</strong> on successful completion.  
+
+	</ul>	
+<P>
+
+	<h4>Multi-threading:</h4> 
+	This function is currently not written to be thread-safe.
+	Indeed, it would be difficult to design a thread-safe
+	version of it capable of being repeatedly called. 
+</li>
+<p>   
+
+  <LI> <STRONG> ardp_rqlfree(RREQ req_list) </STRONG>: 
+       Free a list of request structures. </LI>
+<P>
+
+  <LI> <STRONG> PTEXT ardp_ptalloc(void) </STRONG>: 
+       Allocate a new packet structure. </LI>
+<P>
+
+  <LI> <STRONG> ardp_ptfree(PTEXT pkt) </STRONG>: 
+       Free a packet structure. </LI>
+<P>
+
+  <LI> <STRONG> ardp_ptlfree(PTEXT pkt_list) </STRONG>: 
+       Free a list of packet structures. </LI>
+
+<P>
+
+       <LI><STRONG>ardp_showbuf()</STRONG>: Used by <strong>ardp_retriev()</strong> and
+       <strong>ardp_send()</strong> to display the packets received
+       and sent, when the <strong>pfs_debug</strong> flag is set appropriately.
+
+<P>
+       <LI> <STRONG>ardp_snd_pkt(PTEXT tpkt, RREQ nreq)</STRONG>: used
+       internally on server side to send status/control packets.</LI><P>
+
+  <LI> <strong>int ardp_xmit(RREQ req, int window)</strong>:
+       	Transmits up to <strong>window</strong> unacknowledged packets to the 
+	peer. Called on the client side by ardp_send() and
+        ardp_process_active(); on the server side by  
+	ardp_process_active(). </li>
+<p>
+	
+  <LI><strong>ardp__log(int type, RREQ req, const char * format, ...)</strong>:
+	Logging function used by server-side functions to report
+	errors and status.  This function only does something if
+	<strong>ardp_vlog</strong> has been assigned a value.</li>
+
+<p>
+        
+
+ 
+</ul>
+
+ARDP's configurable parameters are defined in a global data structure named
+<tt>ardp_config</tt>.  This structure is initially filled in by
+<tt>ardp_initialize()</tt>, which uses the 
+<em>p_config</em> routines of <em>gostlib</em>.  After your program
+calls <strong>ardp_initialize()</strong>, you may set these members
+directly.
+
+You will normally not bother setting most of these parameters; skip
+this section if you are just learning to use ARDP.
+
+The members of <tt>ardp_config</tt> are:
+
+<UL>
+<LI><STRONG>char *default_peer</STRONG>:
+	Name (in <tt>/etc/services</tt>) of the port
+<strong>ardp_send()</strong> will use by default, unless one is
+explicitly given.  Overridden if <strong>default_port</strong> is set.
+
+<P>
+<LI><STRONG>int default_port</STRONG>:
+Number of the port <strong>ardp_send()</strong> will use by default.
+Overrides <strong>default_peer</strong>.
+<P>
+<LI><STRONG>int default_timeout</STRONG>:
+Number of seconds before trying to retransmit a request.
+To override this for a particular connection, set the <tt>timeout</tt> 
+member of the associated RREQ structure.   
+<P>
+<LI><STRONG>int default_retry</STRONG>:
+Number of times to retry a request (client).
+To override this for a particular connection, set the <tt>retries</tt> 
+member of the associated RREQ structure.   
+<P>
+<LI><STRONG>int default_window_sz</STRONG>:   Peer window size 
+ardp will use for its default flow-control strategy.   This is the
+window size we assume our peer will accept in the absence of an
+explicit request.  Default value is 16 packets.
+To override this for a particular connection, set the <tt>pwindow_sz</tt> 
+member of the associated RREQ structure.   
+
+<P>
+<LI><STRONG>int max_window_sz</STRONG>:
+The largest window size we will ever use, no matter what the peer
+tells us.  By default this is 256 packets.
+<P>
+<LI><STRONG>int first_privp</STRONG>:
+(Client only): First privileged local port to try to send from; an
+ARDP client uses this when it is running as root.  This facility can
+be used to provide security similar to that of the Berkeley "r"
+commands.
+<P>
+
+<LI><STRONG>int num_privp</STRONG>:
+(Client only) Number of privileged ports to try before giving up and letting the operating system assign us a nonprivileged port.
+</UL>
+<P>
+
+<h2>Additional ARDP interfaces (left out of the docs. before 8/14/97)</h2>
+<P>
+<uL>
+<P>
+<li><tt>u_int32_t</tt> <strong>myaddress(<tt>void</tt>)</strong>: This
+returns a 32-bit integer which is the 32-bit IP (Internet Protocol)
+address of the host this function is called on.
+
+<P>
+<li><tt>const char *</tt> <strong>myhostname(<tt>void</tt>)</strong>:
+The host name of the host this function is called on.
+
+<P>
+<li><tt>const char *</tt><strong>unixerrstr(<tt>void</tt>)</strong>:
+This is the printed string associated with the error code in the C
+library's <tt>errno</tt> (variable) facility.
+
+<P><li><tt>int <strong>ardp_debug</strong></tt>: This variable is zero by
+default.  Setting to values up to twelve (12) means that the ARDP
+library will print additional diagnostic and progress information on
+the <tt>stderr</tt> output stream.  The most convenient value to set
+it to is often nine (9); at values of 9 or greater, it will cause
+the text of all packets sent back and forth.
+
+ <P><li><tt>RREQ</tt> <strong>ardp_partialQ, ardp_pendingQ, ardp_runQ,  ardp_doneQ</strong>:
+<A NAME="queues"></a>
+These queues are used on the ARDP server.  Very few users will ever
+want to examine them, and they should more properly be considered
+internal.  When an ARDP server has received some packets  of a
+request, but does not have a complete request yet, an <tt>RREQ</tt> structure
+with some fields still blank is on the
+<strong>ardp_partialQ</strong>.  When the last packet needed to
+complete a request is received, the server moves the request to
+<strong>ardp_pendingQ</tt>.  When the request begins processing (when
+it is returned from one of the <strong>ardp_get_nxt</strong> family of
+functions), then it is moved to <strong>ardp_runQ</strong>.  When the
+server program is done processing, it indicates that it has completed
+processing the request by giving it as an argument to one of:
+ <ul>
+<li><strong>ardp_respond()</strong> with the <tt>ARDP_RESP_COMPLETE</tt>
+option, 
+<li><strong>ardp_refuse()</strong>, 
+<li><strong>ardp_redirect()</strong>), 
+</ul>then the request is moved to the <tt>ardp_doneQ</tt>.
+<P>The queues are also discussed <a href="ardp_faq.html#queues">in the ARDP FAQ</a>
+
+<P> <li><tt>RREQ</tt> <strong>ardp_activeQ, ardp_completeQ:</strong>  These
+queues are used on the ARDP client.  Once a message has been sent, its
+RREQ is put on the <tt>ardp_activeQ</tt>.  Either when the message has
+timed out, or when a complete reply has been received by the client,
+then <tt>ardp_process_active()</tt> puts the message's RREQ onto 
+the <tt>ardp_completeQ</tt>.   RREQs are removed from the
+<tt>ardp_completeQ</tt> by <strong>ardp_retrieve()</strong>,
+<strong>ardp_retrieve_nxt_nonblocking()</strong>, and the
+<strong>ardp_get_nxt_all</strong> functions that include the functionality
+of <strong>ardp_retrieve()</strong>.
+<P>The queues are also discussed <a href="ardp_faq.html#queues">in the ARDP FAQ</a>
+
+</ul>
+
+<P>
+Authors: 
+	<a href="mailto: swa@ISI.EDU">Steven Augart <tt>&lt;swa@ISI.EDU&gt;</tt>,</a> 
+	<a href="mailto: katia@ISI.EDU">Katia Obraczka <tt>&lt;katia@ISI.EDU&gt;</tt>.</a>
+<P>
+File updated: August 18, 1997, 	<a href="mailto: swa@ISI.EDU">Steven
+Augart <tt>&lt;swa@ISI.EDU&gt;</tt></a>. 

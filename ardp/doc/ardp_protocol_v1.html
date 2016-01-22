@@ -1,0 +1,274 @@
+<TITLE>Fields in the ARDP header (Version 1)</TITLE>
+<H2>Fields in the ARDP header (Version 1)</H2>
+
+<H4> Octet 0 </H4>
+
+Version number. Its value should be 129 (both highest and lowest order
+bits set) for v1.
+
+<H4>Octet 1 </H4>
+
+<UL>
+
+   <LI> Bits 0--1: Unused
+
+   <LI> Bits 2--5: Specify contexts which precede the data area; 
+                  Contexts may (but are not required to) be 
+                  persistent; this means that they may be set once 
+                  per association, and not be included in subsequent
+                  packets. 
+
+<P>
+
+<TABLE BORDER>
+  <CAPTION> Context Bits </CAPTION>
+  <TR><TH ROWSPAN=1>Bit Number<TH>Meaning<TH>Additional Information
+  <TR><TD>2<TD> <a href="#Security Context Semantics">Security context</a><TD> More information follows the <BR>
+                                     description of the header 
+                                     (e.g., authentication in which
+                                     case the security context carries
+                                     the authenticator).
+  <TR><TD>3<TD> Message context<TD>  Used to track causality in <BR> 
+                                     messaging protocols.
+  <TR><TD>4<TD> Naming context <TD>  For example, a Prospero closure.
+  <TR><TD>5<TD> -              <TD>  Reserved for a future context.
+</TABLE>
+<P>
+
+   <LI> Bit 6: UNUSED.  Was originally defined as follows: Privacy protected; indicates that the data field 
+               is encrypted. The encryption method is specified 
+               and included in the security context. The privacy 
+               protected bit tells the receiver that if it doesn't 
+               understand the security context, it might as well 
+               disregard the data. 
+
+   <LI> Bit 7: UNUSED.  Was originally defined as follows: Integrity protected; it indicates that the security 
+               context contains a checksum that applies to the entire 
+               data area. 
+</UL>
+
+<H4>Octet 2</H4> 
+
+<UL>
+
+   <LI> Bit 0: This packet should be acknowledged.
+
+   <LI> Bit 1: This is a sequenced control packet. It should not be
+               delivered to a higher-level application.
+
+   <LI> Bit 2: Total packet count specified in a 2-octet argument that
+               follows. 
+
+   <LI> Bit 3: Priority specified in a 2-octet argument (octet 11
+	       marks the start of the arguments).
+
+   <LI> Bit 4: Protocol id specified in a 2-octet argument.
+
+   <LI> Bit 5: Maximum window size specified in a 2-octet argument.
+
+   <LI> Bit 6: Wait time specified ina 2-octet argument. A non-zero 
+               value for the argument lets the client know that 
+               a request might not be processed for the specified time
+               period, and that the client should not retry the
+	       request. The client may retry sooner if it believes 
+               messages have been missed (e.g., gaps in the list of 
+               received packets). This is an unsigned quantity
+ 	       measured in seconds in network order (i.e., octet 
+               9 is more significant than octet 10). If unspecified, 
+               defaults to current value. A specified value of 0 means
+               revert to client-specified backoff algorithm. 
+
+   <LI> Bit 7: OFLAGS, which means that octet 3 should be interpreted
+               as an additional set of flags. 
+</UL>
+
+<H4>Octet 3 </H4> 
+
+Normally specifies 1 of up to 256 possible options, except when the
+OFLAGS bit in octet 1 is turned on, in which case octet 2 is
+interpreted as additional set of flags. The exact function of these
+additional flags have not yet been specified.
+<P>
+All options supported by version 0 are also supported in version 1;
+additional options have been added.
+<P>
+
+ <!hr size="4"!>
+ <!hr size="5"!>
+ <!hr size="8"!>
+<TABLE BORDER>
+  <CAPTION>Value of options for octet 3 </CAPTION>
+  <TR><TH ROWSPAN=1>Value<TH>Meaning<TH>Additional Fields 
+
+  <TR><TD>0<TD>No Option Specified<TD>None
+  <TR><TD>1<TD>Client to server: Cancel Request. Server to  <br>client: Connection refused. <TD>None 
+
+  <TR><TD>2<TD>Reset peer's received-through count.<TD>Specified in octets 7-8
+
+  <TR><TD>3<TD>Packets received beyond received-through <TD> The rest
+of the header after additional data for octet 11 flags is an arbitrary
+number of octets.  These are bit-vectors specifying which packets
+beyond the received-through specified in this packet have been
+received by the sender of this packet.  For example, if the
+received-through is set to 43, then we know that packet 44 has not
+been received.  The low order bit of the first octet of the additional
+field will be turned on if packet 45 has been received, and off if it
+has not.  The high-order bit will be turned on if packet 52 has been
+received, and off if it has not.  Similarly, the low-order bit of the
+second octet of additional information will be turned on if packet 53
+has been received, and so on.  The recipient of this information may
+choose to ignore it and use a simpler resend strategy.  Similarly,
+this information is never required to be sent.
+
+  <TR><TD>4<TD> Redirect (used by servers):The client should send any
+unacknowledged packets already sent and all subsequent packets in this
+message to a new addresss.  This is designed to be used as a
+load-shedding device.  In one common case, this will be the entire
+response a server gives to a request, and the client will resend the
+entire request to a new server; in the other common case, this will be
+used in conjunction with option 6 or 7. <TD>  6 octets.  The first 4
+octets are the IP address of the new server, in network byte order.
+The next 2 octets are the UDP port to which the request should be
+sent, also in network byte order.
+
+  <TR><TD>5<TD> Redirect and notify (used by servers). Like option 4, but
+the client's network layer should also notify its caller that all
+subsequent requests intended for the old server should be sent to the
+new server instead. <TD> Same as option 4.
+
+  <TR><TD>6<TD> Forwarded: This request was received from a
+client, and the sender is a server forwarding it to the recipient for
+processing.   The recipient should pretend that it received this
+message from the sender indicated by the additional fields, not from
+the real sender of this message.  (If implemented, this request should be accepted only
+from one of a group of trusted hosts.)   This option is intended to be
+used by a central server which distributes requests to several subsidiary
+servers which do the actual work of processing the request, but which
+use the central server as  a contact point.  Presumably, it is cheaper
+for the central server to forward the request to the subsidiary
+servers over a local area network rather than for the client (who may
+be quite far away) to retransmit it.    The central server has done
+the job of notifying the original client (through option 4 or 5) that
+further requests and retransmissions should go to the new server.
+<TD>6 octets: The IP address and port of the original sender of
+this message, as in number 4.
+
+<TD>
+
+  <TR><TD>7<TD>Forwarded; Please notify: Like option 6, but the
+receiving server should notify the client of the switch (through
+option 4 or 5)<TD>6 octets: The IP address and port of the original
+sender of this message, as in number 4.
+
+  <TR><TD>8<TD>ARDP version obsolete: We get this message when the peer knows we are using an ARDP version that it does not understand.  This message is only sent in response to an outstanding ARDP request.  This is the version-specific BAD-VERSION message.   The ARDP peer can only send this back if it knows enough about the recipient's ARDP version so that it can recognize the version information in the BAD-VERSION message recipient's original message.  If the peer doesn't recognize the original message's version, then it sends back a version-independent BAD-VERSION message.  (This is a message whose first octet is zero.)
+<TD>none
+
+  <TR><TD><a name="option9">9</a><TD>Server to client: Context Failed; Connection refused <TD> Optionally, three 
+	octets may follow.  The first is an error subtype code,  the second is the context's service,  and the third is context's mechanism.
+
+<P>
+An error subtype code of zero means no particular error subtype has 
+been specified.   
+
+No other error subtypes have been assigned yet.
+
+Subtypes of error will include
+<ul>
+<li> ARDP_CRITICAL_CONTEXT_NOT_SUPPORTED
+because some critical context or critical context's service and mechanism (probably the security context) was not understood or is not implemented.  and 
+<li> ARDP_CRITICAL_SERVICE_FAILED because some critical (i.e.,
+with the criticality bit set) service failed (could be a checksum or
+other integrity check, could be an authentication, could be encryption.  
+</ul>	
+<p> <strong>Rationale: </strong>
+<ul>
+<li>We (Katia & Steve, 8/96)  expect that all encrypted messages will have the criticality bit set by the sender; however, this assumption is not built into the code nor is it enforced.
+<li>We expect that the only critical context will be the security
+context; however, this is not enforced.  Indeed, as of this writing
+(8/96), the security context is the only implemented one.
+</ul>
+
+The current (8/96) prototype V1 implementation represents (a) with 14
+and (b) with 15.
+
+  <TR><TD>10-252<TD>Undefined<TD>Undefined
+  
+  <TR><TD>253<TD>Request Queue Status<TD> 1 octet.  If bit 0 (low order) is
+set, the position in the queue is requested.  If bit 1 is set, the
+estimated time until this request will be completed is requested.  The
+recipient may ignore this option.
+
+  <TR><TD>254<TD>Response to 253.<TD>1 octet of flags, followed by 1 or 2 additional
+fields.  If bit 0 (low order) of the flags is set, the position in the
+queue is returned as a 2 octet network byte order representation of an
+unsigned quantity.  A value of  \hexnum{FFFF} (all bits turned on) means 
+a queue position of \hexnum{FFFF} or further.  (We do not expect this
+value to ever be used, but it is included for the sake of
+completeness.)  If bit 1 of the flags is set, the estimated 
+time until this request will be completed is returned as a  4-octet
+network byte order unsigned value, representing a time in seconds.  A
+value of \hexnum{FFFFFFFF} (all bits turned on) means a time of
+\hexnum{FFFFFFFF} seconds or more.  (We do not expect this to ever be 
+used).
+
+  <TR><TD>255<TD> Reserved for future expansion.<TD>Undefined
+</TABLE>
+<hr size="8">
+
+
+<H4>Octet 4 </H4> 
+
+Length of this packet's header. The header length does not include the
+security context.
+
+<H4>Octets 5--6 </H4> 
+
+A 2-octet quantity specifying this packet's connection id.
+
+<H4>Octet 7--8 </H4> 
+
+A 2-octet quantity specifying this packet's sequence number. If
+unspecified, the default is packet number 1. An explicit value of 0
+means an unsequenced control packet, which cannot be acknowledged.
+
+<H4>Octets 9--10 </H4> 
+
+Number of packets the sender has received through from the peer.
+
+<H4>Octet 11</H4> 
+
+Marks the start of the arguments. Arguments for octet 1's flags appear
+first. Arguments to bit 0 flag appear before arguments to bit 1 flag, 
+and so on. Arguments for octet 2 options or arguments for the octet 2
+OFLAGS appear next.
+
+<P> 
+This ends the ARDP header. 
+
+<H4>Data Area and Security Context<a label="Security Context Semantics"></H4> 
+
+After the header, the remainder of the packet contains data, unless a
+security context is specified in octet 1. In this case, the security
+context appears at the start of the data area of the packet with the
+security context bit turned on. A security context can cross packet
+boundaries and is associated with the part of the
+transmission/connection from when it was specified until another
+security context is specified. 
+
+<P>
+
+Security contexts are usually associated with a range of packets,
+instead of just the individual packet in which it is specified.
+However, some security contexts, such as a per-packet checksum, are
+associated with the individual packet in which they are specified.
+
+<P>
+
+When a new security context is specified, it may either override or
+supplement the old one. The specifics of this for subtypes of security
+context will be defined later.  
+
+<P>
+
+<a href="ardp_protocol_sec_context.html">Click here for the security
+context format.</a>

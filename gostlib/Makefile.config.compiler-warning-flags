@@ -1,0 +1,67 @@
+# gostlib/Makefile.config.compiler-warning-flags
+# According to the gcc.info page, -W turns on things that -Wall doesn't. 
+# And both together turn on yet more. Hmm. So we have compiled a lot of Prospero with both set.  --swa, 7/97
+
+CFLAGS += -Wall 
+
+# -W gives us warnings about certain unsigned/signed comparisons.
+# These are irritating, and, as of GCC 2.7.2, there is no way to turn just
+# those off without turning off other good stuff too.  Right now I'm
+# turning off the other good stuff too.  --swa, 7/97
+# I have a discussion about the SIGNED/UNSIGNED comparison problems, in 
+# the top-level BUGS file.
+# CFLAGS += -W
+
+CFLAGS +=-Wmissing-prototypes -Wmissing-declarations -Wpointer-arith
+
+# -Wbad-function-cast: Warn whenever a function is cast to a non-matching type.
+CFLAGS += -Wbad-function-cast
+
+
+# Ok, we need to turn these problems off, just for now.  This is temporary; 
+# these need to be fixed, but won't for now.
+# There are enough of them that it's tiring. 
+# CFLAGS +=  -Wnested-externs -Wwrite-strings 
+CFLAGS += -Wno-nested-externs -Wno-write-strings
+
+# -Wno-parentheses because we haven't converted over all of Prospero to 
+# use the GNU parentheses conventions for assignments inside if() statements.
+# Prospero has not been written to comply with the GNU standard practices about
+# parenthesizing expressions.  I did some work on this, but have set it 
+# aside for now.  -swa 7/97
+CFLAGS += -Wno-parentheses 
+
+# -Wcast-qual: We turn off warnings about this for now, because we are using
+# some casts to "char *" to turn off other warnings about casting to
+# "const char *."
+# --swa, 7/97
+# CFLAGS += -Wcast-qual 
+CFLAGS += -Wno-cast-qual
+
+# We still have some functions which use old-style function declarations, so
+# we don't turn on -Wstrict-prototypes, although it might be good to do so.
+# CFLAGS +=-Wstrict-prototypes
+
+# -Wconversion leads to a number of warnings.  These are mentioned in BUGS.
+CFLAGS += -Wno-conversion
+
+# Current development in ARDP means that we have many functions with unused
+# arguments.  These will be later finished, with the remaining ones 
+# updated with the GL_C_ARGUMENT_UNUSED macro. 
+# Actually, -W is the one that complains about unused arguments, and we have to
+# remove -W to turn off these complaints.
+CFLAGS += -Wno-unused
+
+# Warnings on here have been checked for most, if not all of the code.
+# The server has been checked clean under -Wall on SunOS 4.1.3.
+
+# -Wimplicit does not work on SunOS 4.1.3., because the include files 
+# don't prototype all the system functions.  It was tested under Solaris 
+# in 1994.
+# CFLAGS += -Wimplicit
+
+# As of early 1994, compiling with these would generate lots of warnings.
+# GCCTRY = -Wformat -Wshadow -Wreturn-type 
+
+# GCCNO = -Wredundant-decls -Wstrict-prototypes
+# CFLAGS += -O -Wuninitialized # -Wuninitialized is not supported without -O

@@ -1,0 +1,145 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+  <head>
+    <title>ARDP Security Context Format</title>
+  </head>
+
+  <body>
+      <h1>ARDP Security Context Format</h1>
+
+This document reflects the implementation of the security context as
+      of March 18, 1996.   <!We expect this will be the same as the
+publicly released version of the documentation.  >A current version of
+this document may be found via the ARDP home page, at URL <a href="http://gost.isi.edu/info/ardp"><tt>http://gost.isi.edu/info/ardp</tt></a>.
+
+The current format is implemented in
+      <tt><a href="src/ardp_req_security.c">ardp_rec_security.c</a></tt> in the ARDP source distribution.
+
+<a href="ardp_protocol_v1.html#Security Context Semantics">
+The ARDP v1 protocol specification has a section describing how the security context is applied to an ARDP message.</a>
+      
+<P>
+The first four bytes of the security context are the length of the
+	entire security context in bytes or octets.  They represent a four-byte
+	unsigned integer in network byte order.  This count includes the
+	four bytes that specify the length of the context.
+<P>
+The rest of the security context is composed of zero or more blocks.
+	These blocks may cross packet boundaries.  
+	Each security context block starts with one byte, the <i>service
+	byte</i>.  The bits of the <i>service byte</i> are allocated 
+	as follows: 
+<P>
+<TABLE BORDER>
+  <CAPTION> Bits of the Service Byte </CAPTION>
+  <TR><TH ROWSPAN=1>Bit Number<TH>Meaning<TH>Additional Information
+  <TR><TD>7<TD> Criticality bit<TD> If this bit is set and the
+	    recipient either does not understand this security service and
+	    mechanism, or some aspect of processing it fails (e.g.,
+	    unable to verify a checksum), then the
+	    recipient should refuse the message with <a
+href="ardp_protocol_v1.html#option9">ARDP option 9</a>.
+<P> If the criticality bit is not set in a block of the security context, the
+context's recipient may ignore any part of that block that is not understood.
+  <TR><TD>6<TD>Me<TD>This block contains security context information
+	    that the originator generated.	    
+  <TR><TD>5<TD>You<TD>The recipient is requested to generate a
+	    security context block with this service and mechanism.
+  <TR><TD>4--0<TD>Service Code<TD>A numeric code representing a
+      security service.	   
+</TABLE>
+<P>
+The currently defined <i>security services</i> are <strong>PAYMENT,
+	  INTEGRITY, AUTHENTICATION,
+ENCRYPTION.</strong> and <strong>CLASS-OF-SERVICE</strong>.  
+<P>
+Most <i>security services</i> can be performed by different algorithms
+or <i>mechanisms</i>.  For example, authentication may be done, among
+other means, via Kerberos or via simple passwords (as FTP and TELNET
+do).  The second octet of a security context block indicates the particular
+<i>mechanism</i> implementing the <i>service</i> specified by the
+first octet.
+<P>
+The numeric codes for security services and mechanisms are defined in
+the table below.  They may also be seen in the ARDP source code, in <tt><a
+href="src/ardp_sec.h">ardp_sec.h</a></tt>.  
+	
+<P>
+The next four bytes are the length of the arguments to this block.
+	This is an unsigned integer in network byte order.
+	Some security contexts (especially ones being requested but
+	not sent, where the <i>you</i> bit is set but the <i>me</i> bit is not)
+	will have no arguments.
+<P>
+After this length count, that many bytes of arguments are present.
+The arguments and their format are interpreted by each security
+service and mechanism.
+
+<P>
+<TABLE BORDER>
+<CAPTION>Defined Security Context Services and Mechanisms</CAPTION>
+<TR><TH ROWSPAN=1>Mechanism (value)<TH>Service (value)<TH>C Identifier<TH>Argument Format
+<TR><TD>INTEGRITY (2)	<TD>INTEGRITY_CHECKSUM (0x01)<TD>
+	<tt>integrity_checksum</tt><TD>If the ME bit is set, the
+argument is four bytes long.  It is the four-byte CRC checksum of the
+payload.  If 
+the ME bit is not set, the arguments field has zero length.  <P> If the
+<i>you</i> bit is set, the sender expects that the response it receives will
+contain a 4-byte CRC checksum for the payload.
+<TR><TD>INTEGRITY (2)	<TD>INTEGRITY_KERBEROS (0x22)<TD><tt>integrity_kerberos</tt>
+<TD>
+From the client to the server, the argument is:
+<ul>
+<li> A four byte
+count in network byte order, <i>x</i>.   
+<li> Next is an XXXXXX
+structure, as defined in <a href="#where-krb5-protocol-specification">the Kerberos v5 protocol spec</a>.  The XXXXXX
+structure is <i>x</i> bytes long.  The XXXXXX
+structure is the same as the output of the Kerberos v5 library call 
+<tt>krb5_mk_req()</tt>.
+<li> Next is a Kerberos YYYYYY structure, the
+same as the output of <tt>krb5_mk_safe()</tt>.  The length of the
+YYYYYY structure is implicitly encoded by the total length of the
+arguments minus <i>x</i>.
+</ul>
+<P>
+From the server to the client, the argument is:
+<ul>
+<li> A four-byte 
+unsigned integer in network byte order, <i>depends-on-authenticator-number</i>.This is a reference to the Kerberos authenticator that was used to
+produce the krb5_mk_safe().
+<li> A four-byte 
+count in network byte order, <i>x</i>.   
+<li> Next is a Kerberos
+protocol ZZZZZZ structure.  (Implementors: This structure is the same
+as the output of the Kerberos v5 library call <tt>krb5_mk_rep()</tt>,
+<i>x</i> bytes long.)  
+<li> Next is a Kerberos protocol YYYYYY
+structure (Implementers: This is the output of <tt>krb5_mk_safe()</tt>.)
+</ul>
+<TR><TD>AUTHENTICATION (3)      
+    <TD>AUTHENTICATION_KERBEROS (0x01)
+    <TD><tt>authentication_kerberos</tt>
+    <TD>From the client to the server, the argument is the
+    <em>authenticator</em> produced as the output of the krb5_mk_req() Kerberos
+    library call.  The length of the authenticator is known because it
+    is the same as the length of the total argument.
+
+<P> The <em>authenticator</em> is all that is required for
+Kerberos authentication.  
+
+<TR><TD>CLASS_OF_SERVICE (5)	<TD>CLASS_OF_SERVICE_TAGS (0x00)<TD>
+	<tt>class_of_service_tags</tt><TD>
+The arguments are two null-terminated ASCII strings.   They represent
+tag/value pairs.  The first string is the name of the tag.  The second is
+the tag's value.
+</TABLE>
+<P>
+<h2>References</h2>
+<a name="where-krb5-protocol-specification">The Kerberos v5 protocol
+specification may be found in Internet <a href="bogus link to RFC QQQQQQ"> RFC-<i>QQQQQQ</i></a>
+<P>
+<hr>
+<small>Authors: <a href="http://www.isi.edu/people/katia">Katia Obraczka &lt;katia@ISI.EDU&gt;</a>; <a href="http://www.isi.edu/swa">Steve Augart &lt;swa@ISI.EDU&gt;</a>.</small>
+</BODY>
+</HTML>

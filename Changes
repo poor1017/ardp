@@ -1,0 +1,3200 @@
+f-*-outline-*-
+This file documents Prospero, ARDP, and GOSTLIB changes.  It covers
+Prospero changes since 8/1/96, and is exhaustive for ARDP and GOSTLIB
+changes since 2/97.  It is intended to be a comprehensive list of
+changes; it is (or should be) updated every time a change is checked
+into Prospero, ARDP, or GOSTlib. 
+
+For a simpler list of changes to Prospero, see README.html in the top
+directory of the Prospero release.
+
+The later parts of this file are formatted so that they can be read
+with Emacs's outline-mode.  If you don't have Emacs, don't worry; it's
+human-readable.
+
+*Begin changes (8/96).  
+**These predate the use of EMACS's outline-mode
+Ported Prospero to Solaris 2.5.1 (SunOS 5.5.1)
+8/1/96, swa@ISI.EDU, sridhar@ISI.EDU
+
+Updated INSTALLATION directions (corrected old bugs)
+
+Added USE_HTTP_GW, USE_WAIS_GW, USE_GOPHER_GW config. options to config. 
+Makefile;s. 
+
+Changes to ARDP library:
+
+Fixed ardp_rwait() prototype
+
+Casted struct sockaddr_in * to struct sockaddr in function calls
+
+(Solaris prototypes caught the trivial mismatch).
+
+Made assignments in condition part of IF statements conform to GNU CC 
+recommendation that they be wrapped with a pair of parentheses.
+
+Annoying feature: inet_addr() allegedly returns -1 but is declared
+unsigned long (handled it by casting -1). 
+
+Added detail to error messages when setsockopt() and bind() fail.
+
+Fixed obsolete P_BINARIES_DEFAULT and P_SITE_DIRECTORY and
+P_GLOBAL_VS_ROOT in include/psite.h.dist
+
+Now include prototype for inet_addr() where used
+(found in arpa/inet.h)
+
+Fixed declaration for ardp_add2req().
+
+Failed attempt to make calls to setsockopt() cleaner (see comments 
+in lib/ardp/ardp_xmit.c)
+
+Little tiny solaris cleanups (lib/pfs/acalloc.c, stuff like that).
+
+<solaris_stdlib.h> no longer needed.
+
+vcache now checks <pserver.h> for PSRV_WAIS_GW before linking in WAIS
+support, PSRV_GOPHER_GW before linking in GOPHER support.
+
+WAIS support and GOPHER support and HOST database are no longer made
+or linked in by default.
+
+
+changes:
+
+8/2/96, swa & sridhar: Got rid of
+AUTOSTATIC_VAR_INITIALIZED(TYPE,VARNAME,INITIALIZER) in
+<pfs_threads.h>.  It was (a) never used (b) broken (c) had an
+inconsistent interface between the threaded and non-threaded macro
+definitions (so it would not have compiled if it had ever been used.)
+
+
+
+Changes committed 8/7/96; swa@ISI.EDU, sridhar@ISI.EDU
+
+1) Configuration-related:
+a) Updated INSTALLATION documents
+b) THREAD_LIBS config option different from LIBS.  Makefile.config.gostlib-dist
+	updated accordingly.
+
+
+2) Cleanup
+	got rid of AUTOSTATIC_VAR_INITIALIZED in pfs_threads.h 
+		(unused)
+	b) Repaired p_th_mutex_islocked() for Solaris
+	c) ardp_refuse() added to ardp.h
+	d) replaced L_FAILURE log facility in delete_link() with more
+		appropriate L_DIR_PERR
+	e) Minor variable name changes in ftp.c; comments improved
+
+3) Threading
+	a) Several approaches tried for creating a new thread under
+	solaris.  We got it to work (i) using pthread_create(), the
+	POSIX facility. (ii) using thr_create(), the Solaris facility.
+	
+	b) Added ardp_rwait()  to Server's (debugging) SLEEP statement.
+	
+	
+Work done by Eul Gyu Im, Spring and Summer 1996.   (minor help from swa)
+Committed Fri, 9/13/96 
+
+* Added HTTP-GW database to Prospero server, with caching and multithreading.
+Multithreading done under SunOS 4.1.3, PFS_THREADS_PROVEN; not yet 
+tested under SOLARIS. 
+
+* Minor improvement to user/vcache/vcache; vcache1 function can now be 
+used separately.
+
+CHANGES to Prospero, made 8/30/96, Steve Augart and Dongho Kim
+
+* Added 'installlibs' target.
+
+* Added 'source-directories' file.
+
+* Added working TAGS target, using source-directories
+
+* Disabled old TAGS target
+
+* Added P_LIBRARIES config variable.
+
+* GOSTLIB now never needs to be linked with ARDP.  (Added ardp_debug.c
+	to gostlib)  
+
+* Changed P__FREE_PATTERN and P__INUSE_PATTERN; removed vestiges of
+	old code (compiler constants FREE_PATTERN INUSE_PATTERN
+	ALLOCATOR_CONSISTENCY_CHECK) 
+
+* p_user_file, p_system_file are now global variables -- can be set by the 
+	programmer (This was done so that Santosh could name the PRM 
+	configuration files something other than .ProsperoResources)
+
+* -D command-line flag now sets both pfs_debug and ardp_debug
+
+* Added three error codes to Prospero library to correspond with 
+	server's error messages -- scan_error() is now consistent with the 
+	protocol specification.
+
+* Improved documentation of keyed data items (GL_KEYED_STRING_... )
+	and moved it to pfs_threads.h from pfs.h.	
+
+
+* Updated & improved prototypes in pfs.h of pget_* family of functions.
+
+* Fixed nasty bug in wcmatch() -- arbitrary length file names now OK.
+
+* Atomic writing of .object#shadow files now happens; behaves properly
+	if disk fills up.
+
+* Improved (really implemented :)) handling of FILE+DIRECTORY and
+	naked OBJECT objects.  New FILE and DIRECTORY flags on vlinks.  
+	vls and vln support these both.  Added pmkobject command to
+	user directory.   CREATE-OBJECT will create these objects.
+
+* ACCESS-METHOD for POS objects now returns PROSPERO-CONTENTS, if the
+	POS object has a FILE component.
+
+* We can set the CONTENTS attribute on POS objects.  This means we can finally
+	write to files!  We even have nice accurate error reporting.
+
+* Logging never causes an internal error; used to (showed when the
+	disk filled up).  We try to log a warning to syslog() if the
+	logfile cannot be written and we send a message to stderr.
+
+* The server should no longer go into an infinite loop of restarts.
+	The above internal error while logging was triggering such a loop.
+	If we get an internal error before any requests have been
+	received, then we don't restart.
+	
+--
+Trivial changes:
+Dependencies updated
+Documentation improved doc/working-notes/prospero-url-scheme.txt
+ARDP protocol Version # now printed out for outbound packets with
+	ardp_debug on. 
+some comments updated
+minor changes to replyf.c to support security context.
+pstatus	supports ARDP security context (done by Katia & Steve)
+vls now prints types in lower case.  This means we print 'f' for files
+	and 'F' for failed expansion of a link.
+
+
+Changes to Prospero, committed 9/20/96, <swa@ISI.EDU>
+
+* EXTERN_MUTEXED_ISLOCKED() macro added to pfs_threads.h; used
+elsewhere in code; takes over almost all uses of
+p_th_mutex_islocked().
+
+* Nasty bug fixed: the second and subsequent ardp PTEXT packets
+created by the PFS library p__add_req() function would be corrupted if
+they contained null bytes.  This meant that long GIF files would be
+corrupted if being retrieved or set via the CONTENTS attribute.
+
+* All bcopy() references turned into memcpy().  Our bcopy1(),
+bcopy2(), bcopy4() functions become memcpy1(), memcpy2(), memcpy4().
+
+* bzero(a, n) turned into memset(a, '\000', n)
+
+* p_mk_nobj() PFS library interface added.
+
+* p_bst_tkappend() library interface added.
+
+* Bits of minor code cleanup; some dead code removed.
+
+* 'makefile installlibs' target -- attempted fix; not done yet.
+
+CHANGES to Prospero, made 11/20/96, Steve Augart, Nader Salehi, and Dongho Kim
+
+VLS:
+(a) Added -S command-line flag (meaning do not Sort).
+(b) Trivial code cleanup
+
+ACL documentation:
+	improved (lib/psrv/check_acl.c, doc/working-notes/new-acl-rights).
+
+
+Changes to GOSTLIB, ARDP, and Prospero, 11/25/96.
+
+Where not specifically stated, by Steve Augart and Dongho Kim.
+Where stated, by Steve Augart and Nader Salehi or Sio-Man Cheang
+or Dino Kutsikos or Padma Indraganti
+
+MAJOR CHANGES: 
+
+1) We implemented the DIRECTORY-ORDERING attribute for all DIRECTORY
+objects.  It can be set and retrieved.  It is in the FIELD namespace.
+Its only two values right now are:
+	UNSORTED '' ''
+and
+	SORTED NAME-COMPONENT INCREASING
+
+It can be set with 'set_atr' or 'pset_at()', and retrieved with the
+usual 'vls -a' command or 'pget_at()' command.  This involved changes
+to the server's EDIT-OBJECT-INFO and GET-OBJECT-INFO protocol
+commands; the DIRECTORY-ORDERING attribute is handled as a special
+case in the code.
+
+If the DIRECTORY-ORDERING attribute is set to UNSORTED, the server
+will no longer sort the directory upon writing updates out to disk.
+(This did not used to be the case).  Therefore, making changes to it
+will still keep it UNSORTED.  This involved changes to dswobject() and
+dsrobject().  This was also why adding the '-S' flag to VLS was not an
+adequate solution to our problem. 
+
+The p_get_dir() PFS library function (and therefore the VLS command
+too) now checks DIRECTORY-ORDERING when it retrieves a directory, and
+behaves appropriately.
+
+Minor note: this means that the -S flag we just added to VLS (do not
+Sort) is now probably never going to be used again.  
+
+2) New interface: p_mk_nobj() makes named objects in a directory, including
+DIRECTORY, FILE, DIRECTORY+FILE, and naked OBJECT.  
+
+"mk_vdir()" is now a simple wrapper around p_mk_nobj(). 
+
+The p_mk_nobj() code started from the mk_vdir() code, with these
+changes: 
+	a) many comments added,
+	b) most function-wide variables renamed,   
+	c) The number of function-wide variables was significantly reduced
+	d) Much code rewritten to be easier to follow.
+	e) Error handling cleaned up.
+
+3) (Nader Salehi and Steve Augart) EDIT-ACL protocol command on server
+side: nasty bug fixed: it was impossible to perform some updates on
+LINK ACLs.  This was fixed, at a huge cost in time.  We added some
+internal consistency checking to handle possible cases where security
+violations would otherwise occur.  So far these haven't been triggered.
+
+
+4) Parsing of hostnames in p__get_pauth() (low-level PFS library
+function used to format Prospero protocol AUTHENTICATE commands) and
+in user VCACHE program has been rewritten; ':' is now an acceptable
+separator, so we can have hostnames like PROSPERO.ISI.EDU:1526, as
+well as the old 'PROSPERO.ISI.EDU(1526)'.
+
+There are likely to still be problems in some places in the code; the
+convention that '(' ')' delimit the port # of a host has appeared in a
+number of places, and they have not necessarily all been identified.
+
+5) The PFS library function 'member()' has had the interface enhanced;
+it now returns the matching member of the tokenlist or NULL, instead
+of simply returning TRUE or FALSE.  This change is
+backwards-compatible with the former interface.
+
+
+6) (Sio-Man CHEANG and Steve Augart): Server implementation of LIST
+command has filter handling fixed.
+
+7) Padma Indraganti and Steve Augart: Prospero VLN user command has new '-h'
+flag, meaning 'Host type'.   This allows us to make Prospero links to
+special hosts with the host type 'GATEWAY'; until now, all hosts have
+been 'INTERNET-D'.
+
+Minor and Medium changes:
+
+1) Code and doc cleanup: Improvements and updates to documentation and
+comments for:  
+	GOSTLIB: 	vqscanf()
+	PFS library: PATTRIB structure, modify_acl(), 
+	PSRV library: ad2l_seq1_atr()
+	SERVER: GET-OBJECT-INFO protocol command implementation
+	USER commands: set_atr, VLN (with Padma), vls, 
+	
+
+2) Enhanced prototypes or interfaces for member(), p__set_sw_id(), 
+	pfs_debug.
+
+3) ARDP library: ardp_rqalloc() interface: passing a NULL value is now OK.
+
+4) Some fixed-size buffers made arbitrary-length (dynamically allocated).
+	
+5) Bugs were fixed in the PFS library p_vl_attribute_alloc()
+function.  This work done by Steve Augart and Dino Kutsikos for the
+ARPA demo. 
+
+6) Error handling strengthened: PSRV library function dsrobject().
+
+7) Improved code flow and renamed variables (for understandability) in
+USER command 'set_atr'.
+
+8) (Code broken out by Padma Indraganti) Additional debugging
+infrastructure enabled.  The development/debugging infrastructure
+function display_link() has been added, in misc/display_link.c.
+Compile and link with it if you want to fancily format the display of
+a link your program is using.
+
+CHANGES to PROSPERO, made December 2, 1996, by Steve Augart and Dongho Kim
+
+a) BUG: VLS was not respecting the -u (don't expand Union links)
+option.
+FIX: corrected the flags it passed to rd_vdir() in case of the '-u'
+option.  This bug was introduced in the last patch.
+
+b) Improved (made code cleaner and easier to follow ) how vls and
+p_get_dir() examine the rd_vdir() and p_get_dir() flags
+that handle expanding or not expanding union links.
+
+c) added comments to 'vls' and p_get_dir().
+
+d) BUG: p_get_dir() would sometimes dump core when expanding union
+links.
+FIX: The bug in p_get_dir() (introduced in the last patch) which could
+cause a core dump in case of union links needing to be expanded.  This
+appeared because not all of the 'struct dqstate' was initialized
+properly.
+
+Changes to PROSPERO, 12/3/96, Steve Augart and Dongho Kim
+
+Confirmed that memory leaks were fixed in mk_vdir().  Improved
+mk_vdir()'s error handling.  Fixed bug where mk_vdir() reported errors
+when in fact it was successful.
+
+Fixed a couple of places in the PFS library where the handling of the
+Prospero Protocol's VERSION protocol message used to break if there
+was a peer software ID that contained whitespace.
+
+Added to Prospero Protocol documentation.
+
+Change to Prospero, 12/6/96, Sukumal Imudom & Steve Augart
+
+We added the P__USE_UTMPX configuration
+description option to pmachine.h.  This is part of porting
+lib/psrv/host/libhost.a to Solaris.
+
+Change to Prospero Server Library (PSRV library), 12/10/96, Nader Salehi and Steve Augart
+
+We fixed a bug in the server's EDIT-ACL command, where deleting the only entry
+of an ACL would lead to a segmentation fault.  This was fixed by replacing the 
+old linked-list remove-an-item code with the EXTRACT_ITEM() macro, in 
+change_acl(), in lib/psrv/change_acl.c.
+
+1/14/97, 12:40 AM:
+swa@ISI.EDU: Added misc/gost_etags.  Top-level Makefile now uses this to
+generate a better TAGS file.
+
+
+Change to GOSTLIB, 1/22/97, Steve Augart:
+p_bstsize() is now the preferred name for p__bstsize().  The old
+p__bstsize() interface remains for backwards compatibility.  
+
+
+Changes to PROSPERO server, checked in Monday, 1/27/97.
+
+Short list:
+
+EDIT-LINK-INFO and EDIT-OBJECT-INFO now preserve the order of
+attributes when they perform the REPLACE operation.
+
+New p_vl_add_atrs() and p_vl_add_atr() interfaces (enhanced versions of old functions).
+
+Bugs fixed in EDIT-ACL on server:
+ (1)  position of new entries added superseding those already there
+ (2) ACL-NONE goes away immediately, whenever a real ACL entry is added.
+
+I) (swa & dongho) EDIT-LINK-INFO:  Fixed REPLACE:  (finished 1/24/97)
+
+ If an attribute on a link (or object!) is REPLACEd, the replacement
+attribute should take the place of the old one.  The implementation
+until now (which was causing problems for Dongho and the Prospero-MAIL
+project) was that the old attribute would be deleted, and the new one
+would take its place.  
+
+Question: is the order of attributes significant to a program *if* the
+attributes have different names.
+Answer: (I) Why not make it possible for it to be so?  This would add
+functionality (admittedly at a cost of simpler implementation) or (II) No.
+
+If you assume (I), then this should be corrected, and is here.  It
+turns out not to be necessary yet.  If you assume (II), then the
+previous behavior isn't a BUG.  However, it is still more aesthetic
+for humans.  It also lets a programmer assume the whole list of
+attributes of different types will be in a particular order, if he or
+she has already set them in that order.  (This could make parsing code
+easier to write, for example.)
+
+This still doesn't free us from the need to sometimes do a DELETE-ALL
+and then an ADD -- we still do not have an INSERT.
+
+As part of the above work:
+
+Added p_vl_add_atrs(), p_vl_add_atr(): New interfaces, in the PFS
+library.  They take a third argument, 'follow_me', the position to be
+inserted into.
+
+II) (swa & dongho) EDIT-OBJECT-INFO:
+
+Changes like those for EDIT-LINK-INFO.  However, ob_add_atr() and
+ob_add_atrs() were static (private) to server/ed_obj_info.c, and we
+are keeping p_ob_add_atrs(), p_ob_add_atr() as also static, until we
+find a clear need to publish them.
+
+Also fixed bug in ob_add_atrs() where in error conditions freeing
+might not occur.
+
+--
+III) (swa) Minor protocol spec amplifications.
+--
+IV) (swa) Various comment improvements.
+--
+V) (swa & salehi) Bugs fixed in SET-ACL on server: (1) Adding an ACL entry which was
+already there will cause the entry to go to the front of the ACL; this
+means that more recently specified rights override older ones.
+(2) ACL-NONE now goes away as soon as a real ACL entry is added.
+--
+VI) STATUS command in dirsrv.c:
+	Now additionally displays process's PID, UID ,EUID, GID.
+Converts times to local.
+--
+Minor: 
+Ordering of include files improved in dirsrv.c. (System files
+shouldn't follow the unique Prospero ones.)
+More arrays turned into flexlen strings.  st_time_str_local global
+variable added to server/dirsrv.c
+--
+The 'vmkdir' command now has memory-use debugging infrastructure added
+to it.  Possibly generally useful function: p_show_memory_usage().
+
+
+
+Changes done and committed 2/7/97, Steve Augart
+
+* (With Nader salehi) ASRTHOST username@*.*.*.* ACL bug fixed (see below)
+
+* P_USERNAME environment variable now read in; can set env-var.
+
+* gl_initialize() (and transitively, p_initialize()) now initializes
+p_err_string and p_warn_string to empty strings instead of null
+pointers.  Misleading comment moved to right place.
+
+* (with katia) Warnings added to headers of ARDP functions which do not do any
+retransmit queue timeouts.  Documents also added to ardp_api_v0.html
+web page. 
+
+* (with katia) ARDP no longer uses time(); replaced last two instances with
+ardp__gettimeofday().
+
+**Trivial:
+
+* trivial doc/manual.tex, improved new-acl-rights.
+
+* (with katia) ARDP mentions ARDP_WAIT_TILL_TO constant more, suggestions for code 
+improvement. 
+
+* turned off some debugging assertions
+
+* (with katia) code rearrangement (lib/ardp/time.c) for legibility.
+
+ **Message sent:
+
+Nader and I fixed another prospero server bug and replaced the
+server.    This one was that ASRTHOST access control list entries
+would not be recognized if the first character was a '*'.
+The new servers are now running.
+
+There is a new client feature now.  You can set the environment
+variable P_USERNAME in order to make the server think you are somebody
+else for authentication purposes.  This is useful for those of us who
+are trying to make access control lists work properly to experiment with.
+
+I have not yet installed the new clients, nor have I committed the new
+sources; to try them, do this (in the C shell): 
+
+  set env P_BINARIES /nfs/gost/build/prospero/user
+  set path = ( $P_BINARIES $path)
+
+--Steve
+
+
+Changes committed 4/1/97 (swa@ISI.EDU):
+
+This cleans up the changes that had been sitting in the directory
+/nfs/gost/products/prospero/working/sun4.SunOS.clean..  It merges them
+with the main sources and allows us to nuke a separate line of development.
+
+pmachine.h: added tests for _INT16_T_ and _INT32_T_
+
+Configuration stuff for HTTP_GW added to Makefile.config.dist and
+inclue/pserver.h.dist.  The configuration stuff still all should be
+reviewed before the release goes out.
+
+Provenzano pthreads support added to
+gostlib/Makefile.config.gostlib-dist
+
+
+Changes done by Sung Wook Ryu, committed 4/8/97:
+Changes to server:
+Sung added db_filep, a new global variable; the GDBM database is now opened 
+only once.  Appropriate changes made in server DB functions and server/dirsrv.c.
+
+USER-visible changes to Prospero, committed Sunday, 5/4/97:
+
+VRM can now delete links with quoted ':' or '/' in their names.
+
+Programmer-visible changes to Prospero and ARDP and GOSTLIB, 5/4/97
+
+*lib/pfs/del_vlink.c (affects VRM user command):
+** BUG fixed: it used to be impossible to use del_vlink() or vrm to 
+   delete links with colons (':') or forward slashes ('/') in their names.
+** BSTRINGS
+   Now uses flexible-length names (bstrings) in all cases where there
+   had been fixed-length arrays of characters.
+** unusual HOSTname types and HSOname types
+   Now has support for various HOSTnames and HSOnames.
+** Forwarding, link names:
+   We now set a VLINK to point to the host and directory being read from.
+** MEMORY LEAKS
+   vdir_freelinks() now called before each 'return' statement; had been
+   a (probable) memory leak.
+     
+*lib/pfs/p_uln_index.c
+** New routine: p_uln_to_diruln_comp_GSP().
+** New routine: p_uln_srindex(). -- rindex(), but for a whole set of 
+   significant characters in quoted Prospero user-level-names.
+
+*gostlib/stcopy.c, gostlib/gl_strings.h:
+** stalloc_GSP(int nbytes, char **gp): /* Ensure that the gostlib string GP
+     will have at least NBYTES of storage allocated for it.  Allocates the storage if unavailable and frees the previous storage. */ 
+
+*lib/ardp/pmachine.h:
+**  P__USE_TZNAME_NOT_TM_ZONE: New feature test to differentiate LINUX and 
+        SOLARIS from SunOS 4.1.3 and other BSD systems.  This refers 
+        to how, on different systems, you find out what time zone you're in.
+**  P__USE_UTMPX: More elegant way of making VFINGER work on Solaris.
+  
+*gostlib/perrno.h, lib/pfs/perrmesg.c:
+** Added new error codes and error message strings for several existing ones.
+
+
+*SOLARIS
+Made various changes so that the current Prospero configuration 
+clean-compiles on Solaris again.
+
+* top-level Makefile:
+	Automatically Installing .h files now should install the proper files; used to install way too many, and not install a couple of vital ones.
+*Updated automatically generated files (as usual)
+** All Makefile.dependencies
+** TAGS
+
+*Various small code cleanups that shouldn't affect the programmer's view.
+
+5/12/97, Sung Ryu & swa: fixed rd_vdir() in PFS library so that it wouldn't
+   break under some circumstances (replaced strcmp () == 0 with stequal()).
+
+Changes committed 5/13/97.  Most of these changes affect the (experimental)
+garbage collection system.
+
+Changes done by Sung Wook Ryu; committed 5/13/97:
+
+
+server/create_obj.c:   
+   *Adding a garbage collection registration routine.
+   There are three types: GC_LOCAL_ONLY_REG, GC_TS_PROPAGATION_REG and
+   GC_REFERENCE_LISTING_REG, and the second one is default.
+
+   * Attributes for the newly created object can be sent along with
+	the CREATE-OBJECT command.
+
+lib/psrv/dsrobject.c:   Garbage collector change:
+	Used to immediately propagate last referenceable
+		timestamp when garbage collecting.  Now we modify it, and do
+		the propagation during a separate refreshment phase.
+
+lib/pfs/del_vlink.c (swa & Sung):
+	Simplified implementation (use FIND_FNCTN_LIST macro).
+	Simpler interface to gc_delete_backlink() -- didn't need all the info.
+	gc_delete_backlink() uses p_get_dir() instead of rd_vdir();
+		improvement in robustness.
+	bug fix: (had been reading into an uninitialized directory
+		structure; caused sporadic problems)
+
+user/vmkdir.c:
+	Additional options so the VMKDIR user command will set the 
+		garbage collection registration type for newly created objects.
+	
+Done by Sung Wook Ryu with Steve Augart:
+
+lib/pfs/mk_vdir.c:
+  * Added p_mk_nobj_gc() interface.  subsumes functionality of 
+    p_mk_nobj() interface.  We are making a unified piece of code that can have
+    garbage-collection conditionally compiled on or off, changing only a little
+    bit of the code.  This will improve maintainability.  Before, we had a
+    mk_vdir_gc() entirely separate from the other mk_vdir().
+
+  * Error handling improved; perrno no longer reset to zero on success.
+
+ed_obj_info.c:
+  * p_ob_add_atrs() now an exported interface for the rest of the server.
+  * gc_read_object() not needed; functionality subsumed into dsrobject, with
+    new DRO_DO_NOT_PROPAGATE flag.
+  * Changes to garbage collection propagation algorithm.
+  * Little functions replaced by calls to FIND_FNCTN_LIST() macro.
+
+6/4/97:  Steve Augart:  Fixed bug; Made call to p_mk_nobj() work 
+even when compiling with GC on.
+
+Changes done & committed by Steve Augart and Nader Salehi, 6/10/97
+
+User visible: 
+
+Fixed nasty SYSV-specific problem in lib/pfs/pmap_cache.c.
+This meant that Solaris users could not retrieve files with
+pfs_open().
+
+Programmer-visible:
+
+Added feature tests to pmachine.h, or moved them there from 
+lib/pfs/pmap_cache.c:
+	DO_NOT_HAVE_WAITPID
+	TURNING_OFF_SIGCLD_MEANS_PARENT_PROCESS_CAN_NOT_WAIT_FOR_CHILDREN
+	SYSV_DERIVED_OPERATING_SYSTEM
+
+*Changes to Prospero committed 7/1/97 (Steve Augart):
+
+(Committing all changes that had been made in the
+/nfs/gost/products/prospero/working/sun4 development directory):
+
+**.gdbinit:
+   Added 'logardp' user command to top-level GDB.
+
+**doc/library.tex:
+   Upped revision to 0.5.4 of 6/1/97
+   Updated documentation of macros.  Added docs. for PREPEND_ITEM,
+      INSERT_NEW_ITEM1_BEFORE_ITEM2,
+      INSERT_NEW_ITEM1_AFTER_ITEM2_IN_LIST, 
+      EXTRACT_HEAD_LAST_ITEM.  Removed obsolete CONCATENATE_LISTS();
+      now it's APPEND_LISTS().
+      
+**doc/protocol.tex:
+   Minor formatting improvements.  Removed silly footnote.
+
+**include/atnames_parse.h, and others:
+   Old ZERO macro decommissioned; now it's GL_ZERO().
+
+**include/pfs.h
+   Added prototype for p_bst_realloc()
+
+**lib/pfs/opentcp.c:
+   Removed extern declaration that didn't need to be there.
+
+**lib/pfs/p_get_dir.c: 
+   Might have fixed a bug with filters being initialized properly.
+   Greatly improved filter documentation.
+   
+**lib/pfs/vlcont2bsta.c:
+   p_bst_realloc() is now a published interface.  Has the same calling
+      signature as the standard C library realloc() function.
+   
+**server/create_object.c:
+   Added an implementation of the ADD option to CREATE-OBJECT
+   
+**server/dirsrv.c:
+   Fixed error message when SIGCONTEXT_LACKS_SC_PC is defined.
+   
+**user/p__vcd.c:
+   Improved error messages
+
+**user/vcache/ftp.c
+   Minor code cleanup.  Removed EXTERN we didn't need.
+
+* Sung and Steve, 7/7/97
+
+** include/pfs.h:
+   Added P_TKFREE() and P_TKLFREE() macros.
+
+*Changes to Prospero consolidated 7/5/97 (Steve Augart):
+
+(Committing all changes that had been made in the
+/nari/prospero-ardp-v1-development directory):
+
+In general, these are the changes that we made for ARDP V1
+development.  However, other changes were also made in this batch.
+
+** .cvsignore (in all directories)
+   Added *.flc to the files we ignore.
+
+**include/pfs_utils.h:  Obsolete, removed
+	Everything in include/pfs_utils.h is now somewhere else.  This
+file is no longer referenced in the Prospero code.
+
+** include/pserver.h.dist: PSRV_HOST turned on by default (this was an inconsistency)
+
+* Change committed 7/8/97 (?)
+** lib/pfs/atr_build.c: vatbuild has new prototype; 
+   added GNU parenthesization to vatbuild()
+
+*Checked in 7/8/97.  Author: Dongho Kim 
+   [checked in by Steve Augart]
+
+**lib/ardp/pmachine.h
+   Dongho fixed a typo in pmachine.h; it had meant you could not
+   clean-compile on SysV systems.  This was great. 
+
+*Changes checked in 7/10/97.  Author: Eul Gyu Im
+   [checkin helped by Steve Augart].  (About 1500 lines of new code.)
+
+**Note to ISI Prospero users:   
+   The changes checked in are mostly not parts of the production
+   Prospero system yet.  
+   
+   These changes should not hurt anything you do; if they do, please
+   contact me <swa@ISI.EDU> immediately.  We are checking them in so
+   that we keep our code base consistent, and so that Gyu and I can do
+   work on promoting the MD5 object identifiers to be supported parts
+   of the production system.  
+
+**Summary:
+***HTTP:
+   Gyu's HTTP documentation had been accidentally left out of previous
+   committed sources.  They are now checked in.  See "doc/http".
+
+***Replication:
+   Gyu wrote a system using MD5
+   checksums as an alternative OBJECT identifier.  This is enabled
+   with MD5_CHECKSUM_AS_OBJ_ID.  This supports a system of replication
+   enabled with SUPPORT_REPLICA.
+
+   There were additional changes made under the #ifdef
+   SUPPORT_REPLICA_V1.  Ignore them.
+   
+**Replication status:
+   The current replica system supports P_OBJECTs as replicas.
+   Updates (including deletions) are propagated.  However, the replica
+   list is currently stored in the objects.  Each object has the same
+   list of replicas (including itself).   
+   
+   Currently, each directory link only points to one of the replicas
+   of an object; the next stage in the research is to make the links point to 
+   all of them.
+
+** Files Modified
+   Changes, Makefile, Makefile.boilerplate, include/atnames_parse.h,
+   include/pfs.h, lib/pfs/Makefile, lib/pfs/Makefile.dependencies,
+   lib/pfs/equal_atrs.c, lib/pfs/in_line.c, lib/pfs/in_link.c,
+   lib/pfs/opentcp.c, lib/pfs/out_link.c, lib/pfs/rd_vdir.c,
+   lib/pfs/vl_comp.c, lib/pfs/vl_insert.c, lib/pfs/vl_insert_ob.c,
+   lib/pfs/vlalloc.c, lib/psrv/dsrobject.c, lib/psrv/dswobject.c,
+   lib/psrv/http_gw/Makefile.dependencies, lib/psrv/http_gw/ht_get.c,
+   server/Makefile, server/Makefile.dependencies, server/delete_link.c,
+   server/dirsrv.c, server/dirsrv.h, server/dirsrv_v1.c,
+   server/ed_obj_info.c, server/list.c, server/newlist.c, user/Makefile,
+   user/aq_query.c, user/vls.c
+
+
+**Files Added
+   doc/http/header-fields.txt, doc/http/http_gw.txt,
+   lib/pfs/pget_at_new.c, lib/replica/Makefile,
+   lib/replica/Makefile.dependencies, lib/replica/TODO.replication,
+   lib/replica/get_replicas_list.c, lib/replica/md5-int.h,
+   lib/replica/md5.c, lib/replica/mk_replica.c, lib/replica/preplica.h,
+   lib/replica/read_replicas.c, lib/replica/rep_util.c,
+   lib/replica/replica.c, lib/replica/rsa-md5.h,
+   lib/replica/srv_chk_obj_info.c, lib/replica/srv_chk_rep.c,
+   lib/replica/srv_cmt_rep.c, lib/replica/write_replicas.c,
+   lib/replica/quorum/ABOUT_THIS_DIRECTORY,
+   lib/replica/quorum/Makefile.dependencies,
+   lib/replica/quorum/Makefile.inc, lib/replica/quorum/quorum_read.c,
+   lib/replica/rowa/ABOUT_THIS_DIRECTORY, lib/replica/rowa/Makefile.inc,
+   lib/replica/rowa/rowa_write_replicas.c, server/create_replica.c,
+   user/mkreplica.c
+
+**Major Replication and MD5 Changes
+
+***New library "libreplica.a" (lib/replica)
+   Includes commands used by the MD5 object ID.
+
+***New user command "mkreplica"
+
+***lib/pfs/pget_at_new.c: pget_at() for server; handles remote and local cases.
+   pget_at_new() will use pget_at() for remote objects and dsrobject()
+   for local ones.  This will go into lib/psrv/ at a later code cleanup.
+
+***Server DELETE_LINK command propagates to replicas.
+
+***New Protocol commands
+   Server has three new protocol commands added to it:
+   CREATE-REPLICA, CHECK-OBJECT-INFO-EDIT, COMMIT-OBJECT-INFO-EDIT
+
+***server/ed_obj_info.c:
+   srv_edit_object_info_sub() routine does replication stuff and has
+   MD5 checksum support.
+
+
+**Supporting Replication and MD5 Changes
+   Makefile.boilerplate now doesn't have paired USE_XXX_LIB/XXX_LIB
+   variables.  This is an improvement; Steve will later confirm that
+   the documentation in the installation instructions are consistent
+   with it, and that there aren't leftovers of the old
+   USE_XXX... system around. 
+
+   The PATTRIB structure includes a special replica_info member, for
+   the REPLICAS attribute.
+
+***vl_equal_atrs(): 
+   New function to compare links, but ignoring TARGET and NAME fields.
+   This is for comparing LINK-valued attributes. 
+
+***in_line(): 
+   Vast usability improvement.  Blank lines no longer generate an error.  
+
+
+***lib/pfs/opentcp.c (and others):  Helpful comments added
+
+***lib/pfs/rd_vdir.c [TO BE DONE]:
+   Still checks just magic no; needs to recognize full-blown object
+   IDs.
+
+***lib/psrv/dswobject.c: No live code modifications.
+***server/list.c: No live code modifications.
+   
+***user/vls.c: Replicas handled specially as attributes.
+    
+
+***lib/psrv/http_gw/ht_get.c: Comments were improved.
+
+***Makefiles:
+   Entries added for new files (obviously:))
+
+***Changes:
+   Updated top-level Changes file with all this stuff.   
+
+*Another change committed 7/10/97: register/unregister
+
+**(1) Now assume that users already have the Prospero executable path set up appropriately; do not try to fix it for them. 
+**(2) unregister and register from misc to user directory
+
+* Change committed 7/10/97: Configuration of replication and md5 ids.
+
+**  Moved MD5_CHECKSUM_AS_OBJ_ID and SUPPORT_REPLICA from 
+  predefined in include/pfs.h to an option in Makefile.config.dist.
+
+*Another 7/10/97 Change
+server/create_replica.c: Added SUPPORT_REPLICA configuration #ifdef
+
+* Checked in 7/10/97.  Authors: Steve Augart and Katia Obraczka
+** Summary
+
+This Check-In, of the /nari/prospero-ardp-v1-development directory,
+provides:
+
+*** The new interface to the ARDP security context, including documentation.
+*** Additional ARDP documentation.
+*** Code cleanup.
+
+**Major Functionality
+
+A major change happened to the ARDP security context
+user interface.  The INTEGRITY_CRC and the LABELS_CLASS_OF_SERVICE
+security context types now work again (after the change) and have been
+tested.  The ARDP library's basic functionality has been tested as
+well.    
+
+***Members added to RREQ structure.
+***Dirsrv option (set in debugger): int p_dirsrv_debug_show_class_of_service_tags_received = 0;
+***ARDP function return type changed to 'enum ardp_errcode'.  
+This allows symbolic display of error codes.
+***Declarations for missing variables and functions in ardp.h; 
+Declarations are sorted alphabetically too.
+***(const char *) cast bug
+Appear to have discovered a surreal little bug in GCC under SOLARIS.
+See APPARENT_BUG_IN_CAST_TO_CONST_CHAR_STAR in <ardp.h>
+***gostlib.h got GL_UNUSED_C_ARGUMENT, NEVER_RETURNS, and NO_SIDE_EFFECTS macros.
+***Converted ARDP to use new u_int32_t typedefs, etc.
+***Cut down executable size for the ARDP library
+See (*ardp_accept)() variable for how we did this.
+***HANDLE_BAD_VERSION (ardp)
+bugs fixed in version compatibility
+***Most warning flags tested.  Code cleanup.  
+See gostlib/Makefile.config.compiler-warning-flags
+***Almost all interfaces for ARDP security context now start with ARDP_SEC or ARDP__SEC or ardp_sec or ardp__sec.
+***ARDP security context code is properly #ifdef'd, so any context type can be turned off.
+***Improved error handling in ARDP's 'struct timeval' manipulation routines.
+See lib/ardp/time.c
+***Nearly hopeless cases
+A couple of files or directories have enough problems that I gave up on
+cleaning them up for a while.
+****user/vcache/ftp.c
+****user/menu
+****user/psession.c
+****lib/pfs/p__req.c
+****lib/psrv/wais_gw
+****user/vfinger.c won't work in the HPUX support.
+
+
+**Minor changes:
+***gostlib/Makefile.config.gostlib-dist is updated. 
+See gostlib/Makefile.config.compiler-warning-flags
+***.gdbinit changed again; ignore this if you have your own.
+***Changes file updated, as usual
+***Top-level Makefile.boilerplate
+**** has additional portability features recommended in the GCC manual.
+****Additional comments in Makefile.boilerplate.
+***.cvsignore files
+Now ignore the *.flc font-lock caches that EMACS generates.
+***gostlib.h
+Got qsscanf() prototype added.
+***Unused variables deleted in a number of places (including gostlib/in_readc.c) 
+***gostlib/list_macros.h:INSERT_NEW_ITEM1_BEFORE_ITEM2_IN_LIST() macro added
+***Prototypes
+****Got rid of many explicit 'extern' declarations in .c files.
+****Many functions are now fully prototyped instead of having old-style (empty parentheses) prototypes.
+****'const' keyword added to many many prototypes in Prospero.
+****Missing prototypes added for functions in the PFS library.
+***Moved function name to the head of the line in more places
+This is part of moving our older stuff to be more in compliance with
+our coding conventions.  This makes it possible to more easily use
+various searching tools to find functions by name.
+***The old ZERO and GL_ZERO() macros gone; using memset(foo, 0, bar)
+***p_mk_nobj_gc() interface added to PFS library.
+***Many 
+
+
+**Files modified:
+.cvsignore .gdbinit Changes INSTALLATION Makefile Makefile.boilerplate
+TAGS app/.cvsignore gostlib/.cvsignore gostlib/gostlib.h
+gostlib/in_readc.c gostlib/list_macros.h gostlib/p_config.c
+gostlib/pconfig.h gostlib/stcopy.c include/.cvsignore
+include/atnames_parse.h include/pfs.h include/pparse.h include/psrv.h
+lib/ardp/.cvsignore lib/ardp/Makefile
+lib/ardp/Makefile.config.ardp-dist lib/ardp/Makefile.dependencies
+lib/ardp/ardp.h lib/ardp/ardp_abort.c lib/ardp/ardp_accept.c
+lib/ardp/ardp_add2req.c lib/ardp/ardp_add2secdata4req.c
+lib/ardp/ardp_breply.c lib/ardp/ardp_get_nxt.c lib/ardp/ardp_headers.c
+lib/ardp/ardp_initialize.c lib/ardp/ardp_int.h lib/ardp/ardp_pr_actv.c
+lib/ardp/ardp_reply.c lib/ardp/ardp_req_security.c
+lib/ardp/ardp_respond.c lib/ardp/ardp_retriev.c
+lib/ardp/ardp_rqalloc.c lib/ardp/ardp_sec.h lib/ardp/ardp_sectype.c
+lib/ardp/ardp_send.c lib/ardp/ardp_showbuf.c lib/ardp/ardp_snd_pkt.c
+lib/ardp/ardp_srv_ini.c lib/ardp/ardp_xmit.c
+lib/ardp/class_of_service_tags.c lib/ardp/dispatch_svc.c
+lib/ardp/dnscache_alloc.h lib/ardp/hostname2adr.c
+lib/ardp/integrity_checksum.c lib/ardp/myhost.c lib/ardp/pmachine.h
+lib/ardp/process_contexts.c lib/ardp/time.c lib/ardp/v1-rewrites
+lib/filters/.cvsignore lib/filters/nl_apply_fil.c lib/pfs/.cvsignore
+lib/pfs/add_vlink.c lib/pfs/asntotime.c lib/pfs/atr_lookup.c
+lib/pfs/copyfile.c lib/pfs/del_vlink.c lib/pfs/equal_atrs.c
+lib/pfs/fl_insert.c lib/pfs/get_acl.c lib/pfs/heuristic_oi.c
+lib/pfs/in_acl.c lib/pfs/in_atrs.c lib/pfs/in_filter.c lib/pfs/in_id.c
+lib/pfs/in_select.c lib/pfs/mk_vdir.c lib/pfs/mkdirs.c
+lib/pfs/modify_acl.c lib/pfs/ob_atput.c lib/pfs/opentcp.c
+lib/pfs/out_acl.c lib/pfs/p__req.c lib/pfs/p_get_dir.c
+lib/pfs/p_initialize.c lib/pfs/p_uln_index.c lib/pfs/pfs_enable.c
+lib/pfs/pset_at.c lib/pfs/rd_vdir.c lib/pfs/rd_vlink.c
+lib/pfs/re_comp_exec.c lib/pfs/readheader.c lib/pfs/socket.c
+lib/pfs/strccmp.c lib/pfs/ul_insert.c lib/pfs/vfsetenv.c
+lib/pfs/vl_attribute.c lib/pfs/vl_attributea.c lib/pfs/vl_priority_q.c
+lib/pfs/vqfprintf.c lib/pfs/wcmatch.c lib/psrv/.cvsignore
+lib/psrv/Makefile lib/psrv/atnames_parse.c lib/psrv/change_acl.c
+lib/psrv/check_acl.c lib/psrv/check_nfs.c lib/psrv/dswobject.c
+lib/psrv/error_reply.c lib/psrv/flocks.c
+lib/psrv/hsoname_aliases.conf.c lib/psrv/magic.c lib/psrv/named_acl.c
+lib/psrv/p__flocks.h lib/psrv/plog.c lib/psrv/read_native_object.c
+lib/psrv/read_shadow_entry.c lib/psrv/gopher_gw/goph_gw_dsdb.c
+lib/psrv/host/collect_info.c lib/psrv/host/collect_info.h
+lib/psrv/host/host_dsdb.c lib/psrv/wais_gw/.cvsignore
+server/.cvsignore server/ardp_additional.c server/authenticate.c
+server/compiled_on.c server/cvt_v1_ltype.c server/dirsrv.c
+server/dirsrv.h server/dirsrv_v1.c server/ed_obj_info.c
+server/get_obj_info.c server/list.c server/newlist.c
+server/restart_srv.c server/shadowcvt.c
+server/p_cvt_database_v5tov6/.cvsignore
+server/p_cvt_database_v5tov6/dsrfinfo_v5.c user/.cvsignore
+user/gc_info.c user/list_acl.c user/padmin.c user/pfs.c
+user/psession.c user/pstatus.c user/set_acl.c user/set_atr.c
+user/vfinger.c user/vget.c user/vln.c user/menu/.cvsignore
+user/vcache/.cvsignore user/vcache/cmds.c
+
+**Files Added:
+BUGS lib/ardp/ardp_api_v0.html lib/ardp/ardp_ioctls.c
+lib/ardp/ardp_labels_cos_alloc.c lib/ardp/ardp_sec_commit.c
+lib/ardp/ardp_sectype_ioctl.c lib/ardp/ardp_srvport.c
+lib/ardp/authentication_kerberos.c
+lib/ardp/client_verify_message_kerberos.c
+lib/ardp/integrity_kerberos.c
+lib/ardp/integrity_kerberos_create_server.c lib/psrv/p_ob_add_atrs.c
+
+
+*Change checked in Friday, 7/18/97; By: Steve Augart and Sung-Wook Ryu
+
+**vqscanf(): fix, enhancement
+***input field width:
+Fixed vqscanf() so that the input-field-width feature works properly.
+We discovered that it didn't when Sung noted that asntotime() broke
+once Steve had changed sscanf() to qsscanf() in that function.
+Conversions such as %2d now work properly, by reading in two
+characters.
+
+***short and long modifiers
+Added modifiers for short to vqscanf().  You can now say
+%hd to read in shorts and longs.  %ld had already been implemented,
+but had been undocumented.
+
+***Code cleanup
+vqscanf() had some duplicate code eliminated; longs and ints and
+shorts all now go through the same execution path, with minor
+branching and rejoining..
+
+
+*Changes checked in Thursday, 7/24/97.  Author: Steve Augart
+
+Cleaning up /nari/prospero.  This is an older development tree that is
+rapidly wandering out of sync; it is being canned for now.
+
+**Makefile.boilerplate
+***Added a really_clean target, for getting rid of generated files, and
+so on.
+***BYPRODUCT_FILES internal variable
+
+
+***Added a PRECOMPILED_PROGS variable to the documentation and generic_install target.
+  This means the "pmkobject" script won't be deleted when we do "make clean".
+***Cosmetic changes
+
+
+**Various cosmetic changes, #include files fixed, documentation added
+***gostlib
+****gl__input_copy.c
+****gl_internal_err.h
+****gostlib.h
+Improved alphabetization.
+
+**user/Makefile: 
+Now handle new Makefile PRECOMPILED_PROGRAMS macro.
+
+
+
+* Changes to Prospero Checked in 7/24/97.  Authors: Steve Augart and Katia Obraczka
+
+**Note to ISI Prospero Users
+
+This is a check-in of the /nari/prospero-ardp-v1-development
+directory.  This shouldn't create any problems.  The configuration
+stuff has been improved yet again; you may want to redo your
+configuration files at some point (go through the INSTALL procedure
+again) to take advantage of the latest stuff, but you don't have to do
+this. 
+
+**Summary
+
+These changes are further development of the new security API. They
+should not be user-visible or programmer-visible (famous last words.)
+They are being checked in so that we can do further development on
+some aspects of the ARDP library, specifically, the host assertion
+style of authentication.
+
+**Major Functionality
+
+***ARDP Security context code works better
+****lib/ardp/ardp_sec_commit.c, lib/ardp/ardp_respond.c :
+Made the server's return message honor the YOU bit.
+Improved comments
+Fixed glitch where arg_length and dummy_4byte were confused.
+
+
+**Minor Changes
+***documentation
+lib/ardp/v1-rewrites
+Updated some copyright notices.
+
+***Configuration
+****Improved configuration format of psite.h.dist and pserver.h.dist
+so that you might not have to change anything in those files.
+****Makefile.config.dist
+*****Constants in Makefile.boilerplate can now be overridden by Makefile.config.dist
+*****Turned on lib/psrv/gopher_gw, wais_gw, http_gw by default,  
+because of a glitch where right now VCACHE always includes GOPHER,
+WAIS, and HTTP support.
+****lib/ardp/Makefile
+GOSTLIB_DIRECTORY: New Makefile macro.
+
+**development
+***fixed cvsignore
+
+**Files Modified
+Changes Makefile.config.dist include/pserver.h.dist lib/ardp/Makefile
+lib/ardp/ardp_respond.c lib/ardp/ardp_sec.h lib/ardp/ardp_sec_commit.c
+lib/ardp/process_contexts.c lib/ardp/v1-rewrites server/dirsrv.c
+user/.cvsignore user/Makefile user/pstatus.c
+
+**Files Added: None
+
+
+*Changes to Prospero (Checked in 7/28/97) 
+Changes checked in from /nari/prospero-ardp-v1-development development
+tree.
+
+These are mostly portability and compiler warnings improvements.
+Most of them are minor.
+
+**Major Changes
+
+***gostlib/perrno.h
+Some variables (p_err_test, p_warn_text) in perrno.h changed (had
+'const' added).  This could cause compilation problems if your code
+uses them in odd ways.
+
+
+**Minor Changes
+
+Fixed a few typos and left-out stuff in previous versions of Changes
+document.
+
+***pfs.h
+Wrapped some system include files so we don't multiply include them.
+
+Now #define _TYPES_ if <sys/types.h> has been #include'd.
+Include __STDARG_H_INCLUDED__ directive
+
+Throw around the word 'extern' a bit more in prototypes.
+
+Added prototypes for some new functions (pget_at_new()).
+
+Added 'const' keyword to some functions return values or arguments:
+	month_sname(), ucase(), 
+
+***pmachine.h, pfs.h:
+
+Portability improvements:
+	P__DO_NOT_HAVE_STRPBRK, P__DO_NOT_HAVE_STRSPN feature tests.
+
+Additional comments explaining portability features , e.g., explaining
+why we need to #include <sys/socket> in pfs.h.  Updated comments
+(SOLARIS 2.3 portability problems that were fixed by 2.5)
+
+Consistency: things that are never used in <pmachine.h> are now all
+wrapped with
+	#if defined(CruftyOldOS)
+instead of:
+	#if defined(NOTDEFINED)
+
+Added new #define you can set in lib/ardp/Makefile.config.ardp.
+Recognized by pmachine.h if you don't want to worry about
+compiler warnings:
+	P__DO_NOT_FIX_MISSING_PROTOTYPES
+
+***Various PFS library functions:
+
+Various ones had 'char *' changed to 'const char *'.
+
+Got rid of old tests for __STDC__ to decide whether to use
+prototypes.  For years now, we have been assuming that we use a
+compiler with prototypes.
+
+Got rid of some old 'extern' declarations 
+
+***Usual updates to lib/ardp/v1-rewrites, as we progress.
+
+***Misc. cosmetic and stylistic and debugging-improvement changes
+Moved more functions over to ANSI  declaration syntax instead of
+old-style.
+Converted over more old copyright notices.
+Moved over more functions to have initial left curly-brace '{' in the
+left-hand column; makes it easier to use some GNU Emacs tools.
+
+***gl_internal_err.h
+I decided to finally stop supporting the old PCC compiler, which could
+not handle pointers to "functions returning void".  This fixed a
+compiler warning. 
+
+***user/vfinger.c
+Fixed a debugging message which would have dumped core.
+
+***Makefile.config.dist
+Lengthy configuration comment added; new prototypes.
+
+**development tree
+The user/new_del_vlink.c program has been reviewed and is being
+deleted. 
+
+**Files Modified
+Changes, Makefile.config.dist, gostlib/perrno.h gostlib/ardp_int_err.c
+include/pfs.h lib/ardp/pmachine.h lib/ardp/v1-rewrites
+lib/pfs/asntotime.c lib/pfs/bindecode.c lib/pfs/binencode.c
+Lib/pfs/month_sname.c lib/pfs/p__req.c lib/pfs/perrmesg.c
+lib/pfs/strccmp.c lib/pfs/strpbrk.c lib/pfs/strspn.c lib/pfs/ucase.c
+lib/pfs/unquote.c lib/pfs/vl_comp.c lib/pfs/vl_insert_ob.c
+lib/psrv/plog.c misc/regex.c server/dirsrv_v1.c server/pstart.c
+user/archie.c user/gc_info.c user/mkreplica.c user/vfinger.c
+
+**Files Added: None
+
+*Changes to Prospero by Nader Salehi and Steve Augart, committed 7/28/97
+
+These changes were checked in from /joy/psolaris.
+
+**Summary
+
+The primary objective of these changes is to make the Prospero PFS
+client library fully thread-safe.  This objective has not been
+achieved yet; there are still problems, documented in
+doc/working-notes/pfs_threads.doc.
+
+Some bugs were fixed.
+
+These changes accomplish some code cleanup.
+
+**Major Changes
+
+***Bug fix: p_vl_attribute(), p_vl_attribute_alloc()
+These functions would not have worked; there was an initialization
+problem that was created during a previous round of code cleanup.
+These functions weren't being called in current code, so this wasn't
+detected until they were used as part of the HTTP gateway.
+
+***TTL attribute now settable remotely
+p_ob_add_atrs() treats the TTL attribute specially.  The upshot is
+that you can now use the Prospero protocol EDIT-OBJECT-INFO update the
+TTL attribute of any Prospero OBJECT.
+
+***General
+
+A variety of functions did not compile because <pfs_threads.h> was not
+#included.  This was because they'd been updated or written since we'd
+last worked with the multi-threading version.  These were fixed.
+
+***Thread-safety documentation 
+Expanded; summary of what remains to be done is in
+doc/working-notes/pfs_threads.doc
+
+Various comments added to various files to further discuss the
+thread-safety.
+
+***gostlib/pfs_threads.h
+
+p_th_mutexed_islocked() is now optional, since POSIX does not provide
+a cheap way to do this.  This, in turn, makes DIAGMUTEX and
+EXTERN_MUTEXED_ISLOCKED into optional commands.  There are now many
+#ifdef PFS_THREADS that were converted into #ifdef
+EXTERN_MUTEXED_ISLOCKED or #ifdef DIAGMUTEX.
+
+Nice hack, whereby we now test to make sure not more than one of the
+PFS_THREADS subtypes is defined.
+
+PFS_THREADS_POSIX (the post-balloting implementation) is now available
+and is the default.  All others are deprecated.
+
+***Prospero Environment functions (pget_{wd,hd,d,vsname}*() family) made thread-safe.
+We now use p__pget_*_initialize() functions called by p_initialize().
+This does the thread-unsafe initializations.
+
+***New p_uln_lastcomp_to_linkname_GSP() thread-safe interface.
+Added this interface, removed the old one, and converted the
+appropriate code (vln.c, in particular) to use it.
+
+***gl_strings.h
+
+***gostlib/p_config.c
+
+p_config.c: p_command_line_preparse() can now be called before
+gl_initialize().  This is necessary.
+
+***ARDP
+
+Fixed ardp_send()'s call to ardp_hostname2addr().
+
+We now do things the 'new way' by default.
+
+Went from getservbyname() to getservbyname_r()
+
+**Minor Changes
+
+***ob_add_atrs() server interface is obsolete
+Superseded by p_ob_add_atrs().  The old interface has now been erased.
+
+***gostlib/gl_charset.h, gostlib/pfs_threads.h
+Avoid multiply including these .h files; added #ifdef wrapping.
+
+***gostlib/pfs_threads.h
+
+#if'd out the dead EXTERN_ALLOC_DECL() macro.
+
+Got rid of the unused and unsafe P_TH_DECREMENT_GLOBAL and
+P_TH_INCREMENT_GLOBAL macros.
+
+***General
+
+Added more 'extern' function declaration qualifiers.
+
+Added some 'const' qualifiers.
+
+ANSIfied some prototypes.
+
+Added some more documentation to functions and various comments.
+
+***Updates to BUGS file
+
+***lib/ardp/ardp_initialize.c
+Added assert(P_IS_THIS_THREAD_MASTER())
+
+***ARDP
+
+At least one more 'short' was caught and turned into a u_int16_t.
+
+At least one more 'int' was caught and made a pid_t.
+
+Fixed a few spelling errors.
+
+Cleaned up at least one sloppy cast.
+
+***Threads
+Fixed a glitch whereby dirsrv.c looked at the SOLARIS macro instead of
+the PFS_THREADS_SOLARIS macro.
+
+***Compiling
+The value of the SOURCEBASE Makefile macro has been changed in all of
+the Makefiles.  It now no longer ends with a slash.  This, in turn,
+means that GNU Emacs's M-x compile mode will be able to properly parse
+the error messages.
+
+***Casting to 'char *const*'
+I tried some experiments in server/restart_srv.o.  I do not understand
+why execv is prototyped:
+
+   extern int execv(const char *, char *const *);
+
+I would appreciate being enlightened.  --swa, 7/97
+
+**Files Changed
+BUGS Changes Makefile app/Makefile doc/working-notes/pfs_threads.doc
+gostlib/gl_charset.h gostlib/gl_mutexes.c gostlib/gl_strings.h
+gostlib/gostlib.h gostlib/in_readc.c gostlib/p_config.c
+gostlib/pfs_threads.h include/pfs.h include/psrv.h lib/ardp/ardp.h
+lib/ardp/ardp_abort.c lib/ardp/ardp_initialize.c
+lib/ardp/ardp_mutexes.c lib/ardp/ardp_pr_actv.c lib/ardp/ardp_send.c
+lib/ardp/ardp_srv_ini.c lib/ardp/myhost.c lib/ardp/p__th_self_num.c
+lib/filters/Makefile lib/pfs/Makefile lib/pfs/asntotime.c
+lib/pfs/p__req.c lib/pfs/p_initialize.c lib/pfs/p_uln_index.c
+lib/pfs/penviron.c lib/pfs/rd_vlink.c lib/pfs/socket.c
+lib/pfs/timetoasn.c lib/pfs/vl_attribute.c lib/pfs/vl_attributea.c
+lib/psrv/Makefile lib/psrv/check_fwd.c lib/psrv/check_nfs.c
+lib/psrv/chk_localpth.c lib/psrv/p__flocks.h lib/psrv/p_ob_add_atrs.c
+lib/psrv/gopher_gw/Makefile lib/psrv/host/Makefile
+lib/psrv/http_gw/Makefile lib/psrv/wais_gw/Makefile
+lib/psrv/wais_gw/buffalloc.h lib/psrv/wais_gw/futil.c
+lib/psrv/wais_gw/sockets.c lib/psrv/wais_gw/sourcealloc.c
+lib/replica/Makefile lib/replica/Makefile.broken_under_solaris
+misc/regex.c server/Makefile server/dirsrv.c server/dirsrv.h
+server/dirsrv_v1.c server/pw_edit.c server/restart_srv.c user/Makefile
+user/psession.c user/vln.c user/menu/Makefile user/vcache/Makefile
+
+**Files added: none
+
+**Files removed: none
+
+*Changes to Prospero by Eul Gyu Im <egim@ISI.EDU>, committed 7/29/97
+
+**Summary
+
+These changes perform code cleanup.  They remove various warnings that
+were being generated by missing prototypes.   They do not add any
+functionality.  They were made only to the replica and HTTP gateway
+libraries. (lib/replica and lib/psrv/http_gw).
+
+**Minor Changes
+
+Additional header files included by various .c files.
+Many prototypes in http_gw.h
+Comments improved in numerous places.
+Many prototypes in preplica.h
+Comments improved in numerous places.
+
+
+
+**Still to be done
+***Function Scope
+More functions used only in one file could be made STATIC; they
+currently have global scope.
+***EXTERN declarations
+Still a few EXTERN declarations in .c files rather than in a .h file.
+
+**Files modified
+Changes include/pfs.h lib/psrv/http_gw/HTMLparse.c
+lib/psrv/http_gw/ht_connect.c lib/psrv/http_gw/ht_get.c
+lib/psrv/http_gw/ht_msg.c lib/psrv/http_gw/ht_parse.c
+lib/psrv/http_gw/ht_util.c lib/psrv/http_gw/http_gw.h
+lib/psrv/http_gw/http_gw_dsdb.c lib/replica/get_replicas_list.c
+lib/replica/mk_replica.c lib/replica/preplica.h lib/replica/rep_util.c
+lib/replica/replica.c lib/replica/srv_chk_obj_info.c
+lib/replica/srv_chk_rep.c lib/replica/srv_cmt_rep.c
+lib/replica/write_replicas.c lib/replica/quorum/quorum_read.c
+lib/replica/rowa/rowa_write_replicas.c
+
+*More changes checked in 7/29/97, egim@ISI.EDU and swa@ISI.EDU
+
+These changes consolidate all changes from ~egim/prospero.
+
+Fixed the replacement ioctl() prototype for SunOS 4.1.3, in pmachine.h.
+
+Fixed various little glitches that had crept in as a result of the
+last batch of changes we checked in.  Now compiles on SunOS 4.1.3.
+Still a few warnings (aren't there always?).
+
+*Changes checked in 7/29/97, swa@ISI.EDU and haldar@ISI.EDU
+
+These changes contain all modifications to ~haldar/prospero
+
+They are minor, unless you're having trouble getting your system to
+compile under Solaris, in which case you'll need them!
+
+**Configuration
+
+***gostlib/Makefile.config.gostlib-dist
+
+**** -D__EXTENSIONS__
+We now always leave -D__EXTENSIONS__ turned on in the CFLAGS macro.
+This is necessary because, under Solaris 2.5.1, the u_short type is
+undefined.  Some of the code (including the system <sys/socket.h>
+include file) needs u_short.
+
+**** C compiler warnings
+Fixed the option for including lots of compilation warning flags.
+
+**Files modified
+
+Changes gostlib/Makefile.config.gostlib-dist lib/pfs/p__req.c
+
+*Changes to Prospero checked in 8/2/97.  Author: Steven Augart
+
+These changes were checked in from /tonga/prospero.
+They mostly improve configuration.
+They also incorporate all modifications found in the configuration
+files of /nfs/gost/products/prospero/working/sun4.sunOS.pure
+
+** Object Attributes
+***The special object attributes (fields, in the FIELD namespace)EXP and LAST-REF may now be modified with the protocol EDIT-OBJECT-INFO command.
+***BUG fixed: TTL
+TTL was incorrectly expecting an ASN-TIME string.  TTL should be an
+integer, representing seconds of time.
+
+**Experiment
+I performed an experiment in software engineering on whether the
+_GSP() or _stcopyr() interfaces were easier to read.  The experiment
+can be examined in lib/pfs/timetoasn.c
+
+**Warning Fixing (server/restart_srv.c; Solaris 2.5 execv() prototype)
+Nader Salehi and Steve Augart experimented with the call to execv() in
+restart_server.  It had persistently been generating a compiler
+warning.  See a discussion of this in server/restart_srv.c if you are
+interested; there is a long comment, and a definition:
+    P__EXECV_PROTOTYPE_MIGHT_DEMAND_WRITEABLE_STRINGS
+
+
+**Configuration
+All configurable makefiles have been updated so that any line that
+could be uncommented (and made into a command) has only one '#' at its
+start.  All documentation lines have more than one '#' at their heads.
+
+***lib/replica
+Now optional; can be configured in Makefile.config.dist.
+
+***P_SYSTEM_DIR
+Now has more of a function.  Many things are set up with P_SYSTEM_DIR
+as the default root.
+
+***Makefile.config.gostlib-dist
+Has configuration for PFS_THREADS_POSIX.
+PFS_THREADS area Reorganized for easier configuration.
+
+**gostlib
+
+***qsprintf()
+The function qsprintf() was moved from the PFS library to GOSTLIB.
+This was done because it logically belonged with vqsprintf(),
+[v]qsprintf_stcopyr(), and [v]qsprintf_GSP, all of which were already
+in GOSTLIB, or which have just been added to it.
+
+***Function attributes
+****gl_function_attributes.h file added
+Function attribute definitions. moved there from gostlib.h
+***NEVER_RETURNS
+The NEVER_RETURNS attribute was added to several error handling
+functions in gostlib.  This helps the compiler avoid giving spurious
+warnings. 
+
+***qsprintf_GSP, vqsprintf_GSP:
+Prototypes added to <gl_strings.h> in preparation for actually writing
+them.
+
+**Files renamed or moved:
+lib/pfs/qsprintf.c moved to gostlib/qsprintf.c
+Makefile.config.dist moved to Makefile.config-dist  [the rest of the
+   .dist need to be renamed still]
+
+**Files modified
+Changes Makefile Makefile.config-dist gostlib/Makefile
+gostlib/Makefile.config.gostlib-dist gostlib/gl_internal_err.c
+gostlib/gl_internal_err.h gostlib/gl_strings.h gostlib/gostlib.h
+gostlib/qsprintf.c include/pfs.h include/pserver.h.dist
+include/psite.h.dist lib/pfs/Makefile lib/pfs/asntotime.c
+lib/pfs/timetoasn.c lib/psrv/p_ob_add_atrs.c server/restart_srv.c
+
+**Usual small stuff
+Updated some copyright notices.  Typos fixed, comments (documentation)
+improved, especially configuration-related ones.
+
+*Change committed 8/3/97.  Author: Steve Augart
+This change fixes yesterday's TTL bug fix.
+***BUG fixed: TTL
+TTL was incorrectly expecting an ASN-TIME string.  TTL should be an
+integer, representing seconds of time.
+
+*Changes to Prospero committed 8/5/97
+These changes commit the latest consolidated changes to /tonga/prospero.
+
+**ARDP library
+***ardp_srv_ini.c: no more exit()
+ardp_bind_port() used to call exit(1) upon failure.  This was Really
+Bad.  This has been fixed.  It now returns a port number, as before,
+and a negative number upon failure.  It now reports errors properly;
+used to just write to stderr.
+
+***ardp__log()
+ardp__log() used to throw away the message if no function had been
+assigned to the ardp_vlog variable.  Now, if ardp_debug is set,
+instead of throwing it away,  we output the message to stderr.
+
+**server
+The appropriate changes to dirsrv.c were made so that it handles the
+new error reporting by ardp_bind_port().
+
+**user
+***vfsetup.source
+The vfsetup.source file, generated by the gen_vfsetup program, has
+been improved.  We no longer add P_PATH to the user's PATH environment
+variable if the user's path already contains P_PATH.  This was done to
+improve the startup time of the user's .cshrc, since the C shell
+rebuilds an internal hash table every time PATH changes.
+
+gen_vfsetup also now makes a vfsetup.source file with a useful
+explanatory comment.
+
+**Configuration
+
+***More makefile consistency (# / ## comments)
+
+These changes were reported as having been done earlier, but were not
+actually completed.  They should be now.
+
+All configurable makefiles have been updated so that any line that
+could be uncommented (and made into a command) has only one '#' at its
+start.  All documentation lines have more than one '#' at their heads.
+
+***Obsolete Kerberos v5beta4 configuration information removed.
+
+***Final .dist files renamed to -dist; consistent with GNU project.
+
+**Files modified
+
+Changes, INSTALLATION, Makefile.config-dist,
+gostlib/Makefile.config.gostlib-dist,
+lib/ardp/Makefile.config.ardp-dist, lib/ardp/ardp_send.c,
+lib/ardp/ardp_srv_ini.c, lib/ardp/ardp_vlog.c, server/dirsrv.c,
+user/gen_vfsetup.c.
+
+**Files renamed
+
+include/psite.h.dist renamed to include/psite.h-dist
+include/pserver.h.dist renamed to include/pserver.h-dist
+include/hsoname_aliases.conf.c.dist renamed to include/hsoname_aliases.conf.c-dist 
+
+*Changes to Prospero checked in 8/14/97.  Author: Steven Augart
+
+The most serious bug fixed here is one where ARDP was failing
+to send to alternative port numbers.   (requested by Gyu.)
+
+The HOST database was returning bogus values for the IdleTime
+attribute.  This has been fixed.  (Requested by Sukumal.)
+
+**doc/ardp_api_v0.html:
+Made this a simple reference to the version in the ARDP directory
+
+**include/garbage_collector.h
+Added EXTERN_MUTEXED_DECL declarations as appropriate.
+
+**lib/ardp/ardp.h
+
+***peer_hostname
+Added a 'peer_hostname' member to the RREQ structure.  This is not yet
+used, but will be, for improved diagnostic output.
+
+***ENUMs
+Converted most #defined numberic constants to become ENUMs.  
+
+***ardp_errcode is now a typedef for enum ardp_errcode
+
+***myaddress()
+Prototype change; now use u_int32_t.
+
+**lib/ardp/ardp_api_v0.html
+This is updated:
+***documentation added on ARDP error codes
+***Discussion of function interactions (which ones remove items from various queues, names of queues)
+***Added 2 pages of documentation on additional functions
+These were not documented before: myaddress(), myhostname(),
+unixerrstr(), ardp_debug, ardp_partialQ, ardp_pendingQ, ardp_doneQ,
+ardp_activeQ, ardp_completeQ.
+***Added 'authors' and 'last updated' sections.
+
+**ardp_init()
+***Made changes that should let ardp_init() work even if ARDP_NONPRIVED
+is defined.
+***Fixed bogus comments.
+***Made debugging output work for port numbers 
+even on machines which aren't in  using network byte order.
+
+**ardp_hostname2addr()
+***Killed dead code.
+***Made specifying a port number work again.
+
+**HOST database  (Authors: Steve Augart and Sukumal Imudom)
+***Removed dead code
+***Now reports errors to plog().
+***Improved test for writable TTY.
+***IdleTime
+Fixed bug (introduced by Steve!) where -1 was being sent back to
+clients as IdleTime.  
+****Now we don't report IdleTime if there are problems or if unavailable
+****Bug fixed in min_idletime() function.
+****Now use long instead of inappropriate time_t for idle time.
+
+**misc/gost_etags:
+Added facilities to handle EXTERN_MUTEXED_DEF_INITIALIZER()
+declarations.
+
+**user/vfinger.c
+***Parsing attributes won't dump core if wrong format.
+***Now print ? in short form if idle time unavailable.
+***code cleanup
+****All attribute parsing now calls internal parse_for_value() routine
+****Removed dead code
+
+**TAGS: Usual update after changes.
+
+**Files Modified: 
+Changes TAGS doc/ardp_api_v0.html include/garbage_collector.h
+lib/ardp/ardp.h lib/ardp/ardp_api_v0.html lib/ardp/ardp_rqalloc.c
+lib/ardp/ardp_send.c lib/ardp/ardp_srvport.c lib/ardp/hostname2adr.c
+lib/ardp/myhost.c lib/psrv/host/collect_info.c
+lib/psrv/host/collect_info.h lib/psrv/host/host_dsdb.c misc/gost_etags
+user/vfinger.c
+
+*Changes to Prospero checked in 8/16/97.  Author: Steve Augart
+
+**Serious Changes
+***p_err_text[] incorrect error messages fixed
+An error (a single missing comma!) was fixed in the initialization of
+the p_err_text array.  This meant that all Prospero standard error
+messages with codes numbered 229 and later were displayed as a
+different error message.
+
+Those of you who are interested in Software Engineering (as I am)
+might ponder the fact that under the pre-ANSI C language definition,
+the typographical error would have been caught immediately, whereas
+under ANSI C it means that the strings are to be concatenated.
+
+**Minor Changes
+***lib/pfs/rd_vdir.c
+Code cleanup: We now use an enumerated type (ROOT, HOME, WORKING) to
+encode the value of the 'relativeto' variable.  This makes it
+easier to follow rd_vdir() with a debugger.
+
+**Trivial Changes
+***Typo fixed in Makefile-list
+***rd_vdir() definition converted to ANSI prototype
+
+**Files modified:
+Changes, Makefile-list, lib/pfs/perrmesg.c, lib/pfs/rd_vdir.c
+
+*Changes checked in 8/17/97, Steven Augart <swa@ISI.EDU>
+
+**DIRSRV port no.
+Fixed bug: DIRSRV was setting its port_no variable to zero.  This bug
+had been introduced when we removed the last call to exit() from the ARDP
+library and made DIRSRV handle a failure return from
+ardp_bind_port(). 
+
+**Minor changes
+***Code cleanup in lib/pfs/p_get_dir.c, as part of diagnosing bug.
+***Dirsrv now reports port opening problems both to stderr and to plog.
+
+**Files Modified:
+Changes, lib/pfs/p_get_dir.c, server/dirsrv.c
+
+*Changes checked in 8/18/97, Steve Augart <swa@ISI.EDU>
+
+This is best viewed with EMACS's M-x outline-mode.
+
+
+**Summary; 
+
+The most important change fixed a bug in ardp_send().
+
+**ardp_send() and ardp_hostname2name_addr().
+
+***Bug fix
+Fixed bug where ardp_send sent to the wrong port number
+Giving ardp_send() a host name already in its cache meant that the 
+port number part of the host name was ignored.  I had introduced this
+bug when I cleaned up ardp_hostname2addr(), ardp_hostname2name_addr(),
+and ardp_send().
+
+I also corrected the documentation of ardp_hostname2addr() --- the
+comment had been bogus.  I added full public documentation in
+lib/ardp/ardp_api_v0.html.
+
+***Caching
+We now cache numeric addresses
+
+**Configuration
+
+***Can now compile Prospero without compiling the replication library.
+
+
+**Stylistic and cosmetic and robustness
+
+***ardp_send() and ardp_xmit()
+
+****Check for error return from ardp_xmit(); abort if problems.
+****We now save the hostname passed to ardp_send().  We put it in the new req->peer_hostname RREQ structure member, and use it, when available, for displaying progress messages.
+****Removed some dead variables.
+****Cosmetic changes from int to enum ardp_errcode
+****Debugging status message now displayed right at the start; improved
+the message too.
+****Removed much dead code.
+
+
+***Makefile.boilerplate
+Removed dead definitions.
+
+
+**Documentation
+
+***lib/ardp/ardp_api_v0.html
+ardp_hostname2name_addr(): 30 lines of documentation added.
+Formatting improvements
+***lib/psrv/hsoname_aliases.conf.c-dist
+Improved comments
+
+***BUGS
+****Added list of missing prototypes under SunOS 4.1.3
+****Additional documentation on various warnings.
+****Minor additional problems mentioned.
+***Makefile.config-dist
+Improved documentation
+
+**Files Modified
+BUGS, Makefile.boilerplate, Makefile.config-dist,
+gostlib/Makefile.config.compiler-warning-flags,
+lib/ardp/Makefile.config.ardp-dist, lib/ardp/ardp_api_v0.html,
+lib/ardp/hostname2adr.c, lib/psrv/hsoname_aliases.conf.c,
+user/Makefile
+
+*Change --  committed 8/19/97 [minor]
+All changes were to text files and comments
+**BUGS
+Updated BUGS report.   Added (to <pmachine.h>) comments on missing
+prototypes.  
+
+*Changes committed to Prospero Friday, 8/22/97
+
+These changes almost entirely have to do with the automatic
+installation of Prospero.  Various glitches were cleaned up
+
+
+**BUGS file
+Reports problem with ARDP library window handling, affects users of
+large messages (> 16 packets, usually).
+
+**Installation
+
+These changes almost entirely have to do with the automatic
+installation of Prospero.
+
+***OWNER, GROUP
+If the installer is not running as root, the OWNER and GROUP do not
+have to be set; you won't get error messages from the $(INSTALL)
+program.
+
+***We now assume a modern 'install' program, which has the -d 
+(create a directory) argument.
+
+***Fixed bug: libpvcache was installed in the BIN directory.
+
+***Fixed bug: vcache program was being double-installed (installed twice)
+
+***Fixed documentation bug in Makefile.boilerplate: 
+We now correctly  identify the $(PROGS), $(SPECIAL_PROGS), and
+$(SPECIAL_OTHERTARGETS).
+
+***No more complaints while installing if we get DIR1777 set to empty.
+
+**Complains if we don't have the $(P_BINARIES) and $(P_LIBRARIES) directories
+ready before trying to install binaries and libraries.
+
+**Cosmetic/Comments
+
+***Makefile comments
+Expanded Makefile comment convention that a single # precedes things
+that could be uncommented.  Double ## precedes English text.
+
+Applied this to top-level Makefile.
+
+***Got rid of necessity for posix_signal.h
+
+**Files Modified
+
+BUGS, Changes, Makefile, Makefile.boilerplate, Makefile.config-dist,
+source-hfiles, lib/pfs/Makefile, lib/psrv/wais_gw/Makefile,
+user/vcache/Makefile, user/vcache/aftpget.c, user/vcache/cmds.c,
+user/vcache/ftp.c, user/vcache/pclose.c
+
+*Changes to ARDP checked in 8/25/97
+Authors: Katia Obraczka and Steve Augart.
+
+These changes were all made to the ARDP security context.  They
+extensively modify the security context's behavior.  The major
+improvement is that Kerberos authentication can now be carried along
+with the Reliable Delivery Protocol transport layer.  The major
+disadvantage is that we still do not have an API by which that
+authentication information can be retrieved.
+
+**Files changed
+Makefile, ardp_accept.c, ardp_add2secdata4req.c, ardp_pr_actv.c,
+ardp_respond.c, ardp_rqalloc.c, ardp_sec.h, ardp_sec_commit.c,
+authentication_kerberos.c, client_verify_message_kerberos.c,
+dispatch_svc.c, integrity_kerberos.c,
+integrity_kerberos_create_server.c, process_contexts.c, v1-rewrites
+
+**Makefile
+Additional documentation, cleanup
+
+**ardp_accept.c
+Added comments.  Many many comments.  (Darn that legacy code.)
+
+**ardp_add2secdata4req.c
+Added some 'const' modifiers.
+
+**ardp_respond.c
+Removed special security context processing (not needed); we just call
+ardp_sec_commit().
+
+**ardp_sec.h
+Fixed typos.  Enabled AUTHENTICATION_KERBEROS.
+Added new kerberos authentication prototypes. 
+
+**ardp_sec_commit.c
+***Nasty typo fixed: had confused ARDP_SEC_ENCRYPTION with
+ARDP_SEC_PRIVACY.
+***Had improved comments.
+***Set secp->processing_state appropriately.
+
+**authentication_kerberos.c
+Almost complete rewrite.  We no longer use kerberos_integrity to do
+kerberos_authentication. 
+
+**integrity_kerberos.c
+NAme changes: all conforms to ardp__sec_ prefix now.
+
+**v1-rewrites
+Updated appropriately.
+
+*Changes to Prospero, 8/26/97
+These changes were made in /nari/prospero; that directory is now
+synced with the master sources.
+
+These changes were made a couple of months past.   They are entirely
+code cleanup and cosmetic.
+
+All changes were to the ARDP library.
+
+**Files modified
+ardp_abort.c, ardp_accept.c, ardp_get_nxt.c, ardp_pr_actv.c
+
+**Widespread:
+Updated Copyright notice.
+Include memory.h as appropriate for memset() prototype.
+
+**ardp_pr_actv.c [need to clean]
+Some signed variables became unsigned.
+Cleaned up: defined a new variable called 'firstbyte'
+Amplified error message when the client gets an unparseable response.
+
+**ardp_sec.h
+Tiny comment fixed.
+
+*Changes to ARDP committed Tuesday, 8/26/97
+Author: Steve Augart <swa@ISI.EDU>
+
+These changes fix two troubling bugs.
+
+1) The ARDP client was sometimes double-sending acks.
+
+2) The ARDP server would not move the window when it received an ACK.
+
+Because of this fix, the .ProsperoResources hack I emailed some GOST
+group members (setting the ARDP window size to 10000) is no longer
+necessary.
+
+
+
+**ardp_pr_actv.c(ardp_process_active):
+We make sure NOW was set before we use it.  We do this each time.
+This fixed the double-ACK bug, yet still saves us from calling
+ardp__gettimeofday() unnecessarily.  Since ardp__gettimeofday() uses
+the gettimeofday() system call, this is a win.
+
+**ardp_accept.c(ardp_accept)
+Instead of eq_timeval(), we say !eq_timeval() in one condition.  A
+single missing ! was all that we needed.  Wow.
+
+**usual documentation of these fixes.
+
+**Files changed
+Changes, lib/ardp/Changes, lib/ardp/ardp_pr_actv.c,
+lib/ardp/ardp_accept.c, lib/ardp/v1-rewrites
+
+*Change to VLN (in Prospero) committed 9/1/97.  Authors: Steve Augart, Dongho Kim
+
+**Bug fixed
+
+Fixed a bug (found by Dongho Kim and by Eul Gyu Im) whereby we would
+get a bus error when vln was invoked from the 'register' script.
+
+**Outstanding bugs
+Note that other bugs were detected in VLN during this process.  There
+appears to be a bug whereby we get an inappropriate error message when we are
+not vfsetup and run vln. 
+
+**Files Changed
+Changes, user/vln.c
+
+*Changes to ARDP library, checked in 9/4/97, S. Augart and T. Ryutov
+
+**Added code to ardp/authenticate_kerberos.c so that the server saves the client's authenticated principal name in the ardp_sectype structure.
+
+**RREQ structure (in ardp.h)
+THIS IS IMPORTANT -- YOU MUST RECOMPILE YOUR COPY OF THE ARDP LIBRARY,
+IF YOU HAVE ONE.
+Cleaned up ARDP Security context's special members of the RREQ
+structure; removed unused members that we'd experimented with.  Moved
+security context special members to live with the permanent code, not
+with the experimental RREQ stuff.
+
+**Debugged (in Prospero's server/dirsrv.c) code for the server to retrieve the
+authenticated Kerberos principal.  This serves as a sample for whoever
+wishes to use the server's Kerberos verification.
+
+We will check in this change, so that in case we break something, we
+have the old version safe.
+
+**Detected problem with Makefile.dependencies; fixed
+If we run 'setdependencies lib/ardp/Makefile' when
+ARDP_NO_SECURITY_CONTEXT is set, we don't get all of the include files
+we would like.  For the future, we need another way of doing this.
+Right now, we just ran it in this directory instead.
+
+**Next task: design and implement a superior interface, even a
+temporary one.
+
+**Files Changed
+Changes lib/ardp/Makefile.dependencies lib/ardp/ardp.h
+lib/ardp/authentication_kerberos.c lib/ardp/v1-rewrites
+server/dirsrv.c
+
+*Changes to ARDP, checked in 9/97
+
+Authors: Steve Augart, Nader Salehi
+
+** GOSTLIB_DIRECTORY is now configurable.
+This will lead to an eventual moving of ARDP up to the top-level, so
+that it lives next to gostlib.
+
+**Files Changed
+
+prospero/Changes, ardp/Makefile, ardp/Makefile.config.ardp-dist
+
+*Changes made to ARDP, 9/8/97
+
+**Summary
+
+These changes do two major things:
+	1) improved debugging output
+	2) Fixed the sample client and server (ardp/sample) that we supply. 
+(They had broken under Solaris.)
+
+ 
+**Details:
+
+***ardp_send.c had a mistake: req->trns instead of req->outpkt.  The
+result was that setting ardp_debug to 9 did not let you see the text
+of the packets were sent on the client side.
+
+***Makefile.dependencies now recognizes that GOSTLIB_DIRECTORY is configurable.
+
+***Bug fixed in ardp_vlog() -- core dump
+now doesn't dump core with an uninitialized variable when showing debugging output. 
+
+***ardp_xmit() debugging output made more sophisticated
+Now shows both the recipient's hostname and IP address, if available.
+
+***sample/client.c:
+For some reason, we were failing to send to "localhost" under Solaris
+2.5!  (Should always work; I don't know why this was happening.)  The
+default host is now the string returned by myhostname(); this is the
+same strategy the Prospero 'pstatus' client uses. 
+
+***ardp/sample/Makefile, ardp/sample/README
+
+Improved documentation and help for new users.
+
+***ardp/sample/{client,server}.c
+
+We were missing calls to ardp_initialize() in both.
+
+**Files Changed:
+ardp/Changes ardp/Makefile ardp/Makefile.dependencies ardp/ardp_send.c
+ardp/ardp_vlog.c ardp/ardp_xmit.c ardp/sample/Makefile
+ardp/sample/README ardp/sample/client.c ardp/sample/sample.h
+ardp/sample/server.c gostlib/Makefile.config.gostlib-dist
+
+
+
+*Changes to ARDP made and committed 9/9/97 (Steve Augart)
+
+**ardp/ardp_api_v0.html
+
+Improved description of ardp_initialize(); warn against the evils of
+calling it multiply.
+
+Improved HTML typeface usage; made more consistent. in ardp_send().
+Other minor formatting improvements.  Improved documentation of
+ardp_retrieve().
+
+*Changes to Prospero committed 9/9/97
+
+Author: By Steve Augart, except where otherwise specified.
+
+**ardp/myhost.c(myhostname): Work by Steve Augart with Padma Haldar
+***Unpleasant BUG FIXED: failure to initialize myname() sometimes, under Solaris.
+Problem: Under Solaris 2.5.1, on TONGA.ISI.EDU, we were getting a
+non-zero value returned from gethostname(), even though the call
+succeeded.  The manpage for gethostname(3c) assures us that errno will
+be set if a non-zero value is returned.  This is not the case.
+The value returned in the argument buffer passed was, in fact, correct.
+
+After tracing a number of executions, we discovered that, sometimes
+(this actually manifested itself in a version of vache), 
+the # of bytes that the buffer needs to store the result string (the
+hostname) is returned.  In other cases, running the same version of
+the library linked with other clients, or even in the same executable
+(I think) we get a 0, which is the value reported by the manpage for a
+correct return.  
+
+Results:
+1) Do not call gethostname() yourself; use the myhostname() routine in
+the ARDP library.  That way we can all work consistently.
+
+2) myhostname() in ARDP now tests gethostname()'s return value against
+-1, which should always indicate an error.  We also have several tests
+in ardp/myhost.c to see if gethostname() has broken in various ways.
+If you set ardp_debug to anything, and gethostname() breaks in some
+yet unknown way, you get informative and possibly amusing output.
+
+***Special code removed; use ardp_hostname2name_addr()
+
+We got rid of a bunch of explicit calls to figure out the address and
+canonical name for our own host.  We use our own special
+ardp_hostname2name_addr() library function instead.  Eliminates many
+problems.  (I hope.)
+
+**Experiments
+
+***ARDP_USE_AUTOSTATS:  This is a software engineering experiment in ardp/authentication_kerberos.c.
+I would appreciate having some of you look at the file and tell me
+which you would find easier to read or think is better: the AUTOSTAT
+version or the version that frees before each return.
+
+**Documentation
+***lib/pfs/p_uln_index.c had a description of the algorithm added, along with an informal demonstration of correctness.
+
+**Cleanup
+
+***misc/regex.c has warnings fixed, by using 'unsigned char' explicitly.
+Note that we have a problem here, actually; Prospero thinks that all
+System V machines lack regexp family functions, whereas Solaris has
+one that we're overriding.  Might as well use the system libraries
+instead.  (That's what they're there for.)
+
+**Development
+TAGS-Makefiles added to top-level directory; useful for global substitute and
+replace or for searches.
+
+
+*Changes to Prospero committed 9/18/97
+
+**Performance improvements to Prospero Server
+Sung and I have made some changes to the Prospero server through which
+we hope to make about a factor of 10 improvement in how quickly it
+reads objects from the database.  [ This was not actually the case]
+
+We have committed those changes.  You should not notice anything
+(except perhaps speed.)
+
+We also added some performance-measuring infrastructure in the new file
+include/measure.h.  This is worth taking a look at.
+
+Sung wrote all the code in measure.h and did many hours of painstaking
+tests, and pointed out the specific problems we addressed in the new
+database reading code.
+
+*Changes to Prospero, Committed 9/23/97 [unannounced]
+
+**Installation
+
+***PSRV_STORAGE removed
+This configuration variable was obsolete and unused.
+***GOSTLIB_DIRECTORY further supported
+A kludge supporting this is now in GOSTLIB.  
+
+**Files Changed 
+Changes, Makefile.config-dist, Makefile.boilerplate
+
+*Changes to Prospero committed 9/23/97 <unannounced>
+**measure.h: START_MEASUREMENT() instead of START_MEASUREMENT
+**Files Changed
+Changes, include/measure.h
+
+*Change to Prospero made 9/23/97 (unannounced; committed from /nfs/tonga/prospero)
+
+**gostlib/usc_license.h added to source-hfiles
+**ARDP changes moved from ardp/Changes to top Prospero Changes
+**Temporary measuring work in progress; hope this doesn't get accidentally committed.
+
+**Files changed
+source-hfiles, ardp/Changes
+
+*Change to Prospero made 9/28/97 (committed from /nfs/tonga/prospero) [unannounced]
+**9/23 source-hfiles change was not actually committed; doing so now.
+**misc/regex.c: Changes made earlier had been bad; reversing them.
+misc/regex.c would not compiled; had appeared to be innocent enough
+changes (just a little 'unsigned config' added; this strangeness had
+been triggered by what appeared to be innocent changes.
+**Minor formatting improvements
+**-DDSROBJECT_MEASURE_PERFORMANCE enabled in lib/psrv/dsrobject.c
+
+*9/24/97 Efficiency changes to Prospero server -- created branch <dsrobject_speedup> (unannounced; /nfs/tonga/prospero) {
+
+**Efficiency Changes
+***Summary 
+The most recent change I made (late last night and today) to
+Prospero's gl_parse library sped up the library, though not enough.
+The speedup was 6.09% on reading a little object and 10.44% on reading
+a big object.
+
+Now that I've cleared the decks, I'm working on a better speedup.
+
+***Details on the Changes I made
+
+The latest efficiency changes were a cleanup of the interfaces in the
+gl_parse library.  (This interface cleanup was actually performed as
+preparation for a rewriting of the library's internals, but it turned
+out to have a noteworthy speedup.)
+
+I added some general functions to gl_parse; they replaced some
+functions that look at gl_parse's internal INPUT data structure.
+
+I got rid of gl_parse's handling of the GL_IO_STRING as a separate
+data type; they are now treated under the code that handles BSTRINGS,
+which is just the general case of an arbitrary block of binary data with
+a length count. 
+
+I now just use a character pointer, instead of an arcane set of
+offsets.
+
+***Merging status, stability
+
+The code is stable enough and useful enough that it is worth merging
+in as it stands.   I may not do this, however, since Sung needs more
+speedups.  
+
+***The raw results:
+The raw results and the analysis tools are in
+/nfs/tonga/swa/measuring/results2.  Here is an extract:
+
+um2: swa@tonga.isi.edu /nfs/tonga/swa/measuring/results2 39} awk -f ../sumup.awk rawdata.oldsrv
+POS/BIG:: 42 samples, 114255.214286 average time to read
+POS/SMALL:: 42 samples, 2312.452381 average time to read
+
+
+um2: swa@tonga.isi.edu /nfs/tonga/swa/measuring/results2 47} awk -f ../sumup.awk rawdata.newsrv
+POS/SMALL:: 42 samples, 2171.880952 average time to read
+POS/BIG:: 42 samples, 102331.619048 average time to read
+
+**Minor Changes to Prospero; more details on above
+***GL__STRING_PARSE, if defined in gl_parse.h
+will eventually mean that qsscanf() will call the (unwritten)
+vqsscanf().
+***GL__IO_STRING is dead.
+***A few old comments cleaned up
+***New interfaces
+****gl_stringlen_to_in()
+****in_placediff() -- still static to in_line().
+***changed_object_handler()
+A changed_object_handler() has been added to dswobject().  This may be
+useful for the replication research that Dongho Kim and Eul Gyu Im are
+performing.
+***read_shadow_entry()
+Additional error reporting.
+
+***Solaris and NOREGEX
+Encountered odd bugs; until now, regex.c had been compiling fine on
+Solaris.
+NOREGEX is now no longer defined in pmachine.h for SOLARIS. 
+
+
+*Changes committed 9/27/97 to branch: <dsrobject_speedup>  (unannounced; /nfs/tonga/prosp.nparse)
+
+This is a brief message; have to continue work.
+
+**Log file and plog() changes:
+***The log file can be turned off:
+Specify the name as '' to plog or dirsrv; or, specify it as --shut-up
+to dirsrv).   
+If this is done, we don't log manually either.
+***Must now specify the logfile with set_logfile().  If you don't, then no logging will be done.
+***Dirsrv now respects pinfosrv_config.logfile, and uses it appropriately.
+Separate logfile_arg global is now dead.
+
+
+**Fixed to compile and work with -DNDEBUG on.
+**'make clean' won't delete 'TAGS' or 'tags'; use 'make reallyclean'.
+**CLIENTS_BIN config. added to Makefile.config-dist -- can now make just the server.
+**gostlib/Makefile has option (soon to go): qsscanf.prev.c or vqsscanf.c/qsscanf.c
+**SERVER_DATA_FILE gone in gl_parse.h; now optional GL__IO_SERVER_DATA_FILE
+**vqsscanf() became vqslscanf().
+***Some converstion, not complete.
+***Haven't done the 'inline' trick yet.
+
+**stcopy_GSP function (inline) added to gl_strings.h
+**P_ALLOCATOR_CONSISTENCY_CHECK turned off if you compile with -DNDEBUG
+**qsscanf() changing over to gl_qsscanf()
+**New gl_qslscanf() function, gl_qbscanf().
+**Fixed little bug in list_macros.h -- assertion now made more diagnostic.
+**qscanf() now dispatches specially to vqslscanf().
+**gostlib/qsscanf.c: qsscanf() code (with GL_STRING_PARSE #ifdef'd) improved
+Shorter to read.  Calls vqslscanf(), or vqscanf(), depending on #ifdef.
+**gl_stringlen_to_in(): const added fixed.
+**gostlib/vqscanf():
+***Common static functions made inline: in_readcahead(), _readc(),_incc(), _inpsetspn(), _qinpsetspn()
+Also moved to the top of the file.
+***ardp/Makefile.config.ardp-dist:
+Added LIBS for profiling under Solaris.
+**lib/pfs/vl_insert_ob()
+***Made link insertion code normal -- no more specialty stuff
+***Caught bug in SUPPORT_REPLICA code.
+**dswobject(), dsrobject(): caching of FILE status
+***We now cache the FILE status in the .object#contents.  This avoids a call to stat().
+**Code cleanup
+***server/ed_obj_info.c has warnings gone finally -- prototypes fixed.  
+***A few Miscellaneous warnings fixed
+**server/compilation_flags.c
+Experiment that hasn't been finished yet.  Will record the flags this
+server was compiled with.
+
+
+*Changes committed 9/27/97 to branch: <dsrobject_speedup>  (unannounced; /nfs/tonga/prosp.nparse)
+These changes inline the in_readc() family of functions, the core of
+the gl_parse sublibrary.  They also add a more general inlining
+infrastructure to gl_function_attributes.h.  With it, we avoid having
+the same code in two places -- always a source of bugs.
+
+They speed up object reading by 12% (small) to 20% (bug)
+
+*Changes committed 9/28/97(3:30 am) to branch: <dsrobject_speedup> (unannounced)
+
+**Main change:
+dsrobject() and dswobject() cache P_OBJECTs in memory.
+
+These have been tested with and without -DNDEBUG and optimization.
+
+**Added optimization flags to Makefile.config.gostlib-dist
+**stcopy_GSP() now in gostlib
+**include/pfs.h: P_OBJECT structure much better commented.
+**in-memory caching added to the Prospero object store.  It is nice.  We cache shadow files on reading and on writing.  We even cache error return codes.
+**vlcopy() cleaned up.  Hadn't returned properly linked lists., or at least might not have been doing so.
+
+
+*Changes committed 9/28/97(6 pm) to branch: <dsrobject_speedup> (unannounced)
+**Fixed bug in psrv/shadow_cache.c
+***We now copy all of the information we need into and out of the cache; had left out some important members of the P_OBJECT structure.
+**Also did code cleanup and speedup in link copying:
+***vlcopy() speedup of 3:30 am had bugs.
+***vlcopy() had code improvement (cleanup mostly).
+***vlcopy() now copies all elements of the VLINK structure; didn't used to.
+****Opportunity for futher vlcopy() speedup by inlining or macro-using.
+***vll_copy(), p_vl_copy() are macros around vlcopy(), (Configurable with #ifdef in include/pfs.h).
+***p_fll_copy() macro.
+
+**assert() and internal_error() macros now display function name under GNU C.
+***We compile either  gl__function_internal_error_helper or gl__function_internal_error_helper_gcc
+***Display of information is improved -- we display whatever info. was provided.
+***(*internal_error_handler_gcc)() prototyped, but not yet used.
+
+*Changes to Prospero parsing and gostlib, committed 10/2/97(4:30pm), to branch <dsrobject_speedup> (unannounced)
+**Various comments and documentation bugs fixed.
+**Makefile.boilerplate, gostlib/Makefile, lib/ardp/Makefile: 'touch' dependency added 
+**gostlib/gl_set_bstring_length.c added.
+**gostlib/gl_charset.h: 
+***GL_CHARSET_SAVE_SPACE added.
+***in_charset(), etc, changed to is_in_charset(), to avoid name confusion.
+**gostlib/gl_function_attributes.h: GL_INLINE attribute added.
+**gostlib/gl_parse.h
+***NUMERIC_OVERFLOW and BUFFER_OVERFLOW from qsscanf() now exported as GL_IO_ -prefixed versions.
+***NO_SIDE_EFFECTS keyword added where appropriate. 
+**gostlib/qscanf.c: incorrect call to vqslscanf() removed.
+**gostlib/vqsscanf.c: 
+***Several static functions and macros turned into static inline
+functions.
+***_readc(), _incc(): Experimented with two versions of each; picked the fastest.
+***quote and am_quoting variables turned into respect_quoting and active_quoting.
+**ardp/Makefile.config.ardp-dist
+***GNU Malloc is suggested.
+**include/pfs.h:
+p__check_vdir_consistency() is fixed.
+**server/dirsrv.c:
+***Internal error log message fixed so it works even with file or line unset.
+***Internal error messages improved.
+
+*Changes to Prospero (from /nfs/tonga/prosp.nparse2) committed to CVS branch <dsrobject_speedup> on 11/4/97
+**Serious stuff
+***P_MACHINE_TYPE and P_OS_TYPE are currently broken.
+***server/dirsrv.c: Added additional STATUS message information: compilation flags, host, host type.
+***user/vfinger.c: considerably improved error handling.
+
+
+**Middle stuff
+***Makefile.boilerplate, and makefiles throughout: .PHONY target (used by gmake)
+***ardp/ardp_timeouts.c: Can now handle it if you #define ARDP_BACKOFF to be a factor of greater than 2* previous value.
+***ardp/ardp_vlog.c: Fixed memory leak.
+***lib/pfs/Makefile: Added vl_copy.c
+***server/Makefile: Added code to automatically generate server/compilation_flags.c
+***misc/Makefile.define_machine_os: can be included to P_MACHINE_TYPE and P_OS_TYPE variables as necessary.
+
+**Minor stuff
+***Cleaned up warnings in server/ed_link_info.c
+***Makefile.boilerplate: updated  comments, configuration improved -- no longer need HTTP_GW or WAIS_GW or GOPHER_GW to compile vcache.
+***TAGS table: new
+***include/pfs.h: Comments improved
+***lib/psrv/shadow_cache.c: Comments improved
+***lib/psrv/http_gw/.cvsignore: New file.
+
+**Files Changed 
+include/pfs.h lib/ardp/Makefile lib/ardp/ardp_timeouts.c
+lib/ardp/ardp_vlog.c lib/ardp/pmachine.h lib/pfs/Makefile
+lib/psrv/shadow_cache.c server/.cvsignore server/Makefile
+server/compiled_on.c server/dirsrv.c server/dirsrv.h
+server/ed_link_info.c user/vcache/Makefile Changes
+Makefile.boilerplate TAGS gostlib/Makefile
+
+**Files added
+lib/psrv/http_gw/.cvsignore lib/pfs/vl_copy.c
+gostlib/gl_set_bstring_length.c
+
+
+*Changes to Prospero committed 11/14/97
+These are the changes from the dsrobject_speedup branch mentioned previously.
+
+*Changes made 12/5/97, Steve Augart <swa@ISI.EDU>
+
+**lib/pfs/re_comp_exec.c: 
+Sung-Wook Ryu discovered that the <re_comp.h> header file does not
+exist under SunOS.  We include a substitute that might actually work
+under SunOS; hasn't been tested under that operating system.
+
+**gostlib/vqsscanf.c
+Sung-Wook Ryu reported problems with vqsscanf(), such that the new
+servers would encounter an internal error when vqslscanf() parsed the
+"%&'s" construct.  I have fixed this by making absolutely sure that
+vqslscanf() doesn't treat zero characters specially, and by making
+sure that vqslscanf() always tests whether characters are available
+against the 'toofar' count.  
+
+Note that, in vqslscanf(), you must call readc() before testing STR
+against TOOFAR.
+
+*Changes recorded 8/29/97, Committed 12/5/97
+Changes come from /nfs/gost/products/prospero/working/sun4
+
+**.gdbinit
+Minor changes to standard version.
+
+**Bugs Fixed
+This entry notes that the following bugs have been fixed, and are now
+removed from the BUGS file included with the Prospero sources:
+
+***ARDP library window handling.
+Looking at a long directory (longer than the default window size)
+yields problems with ARDP.   Recreate with these .ProsperoResources:
+   ardp.max_window_sz: 1
+   ardp.my_receive_window_size:1
+Temporary hack:
+   ardp.max_window_sz: 10000
+   ardp.my_receive_window_size:10000
+
+***Installation
+Installs libpvcache.a in BIN directory.  Don't install other libraries
+automatically. 
+[other installations work, though.]
+
+*Changes to Prospero committed 12/11/97
+**gostlib/vqsscanf.c: Fixed typos in vqslscanf() that kept it from compiling.
+
+*Changes to Prospero committed 12/15/97.  Author: Sung-Wook Ryu
+These changes apply to cyclic garbage collection.
+
+They implement a backwards AYG (Are You Garbage?) inquiry.
+
+Here are the details, for those who care:
+
+**lib/psrv/Makefile.dependencies: rebuilt
+**lib/psrv/gc_refresh_object.c: Massive changes
+**lib/psrv/dsrobject.c
+If the status of the object is GC_AYG_PROCESSING, then reply with GC_ALIVE to
+all object in the reply list.
+
+**include/garbage_collector.h
+***Additional function prototypes added; simplifies parsing in
+ed_obj_info.c
+***Other minor changes
+**include/psrv.h
+ob_add_atrs() prototype removed; that function was dead for a while.
+
+**server/Makefile.dependencies
+Usual updates
+**server/create_obj.c
+Garbage-collection specific changes
+***add a garbage collection status attribute
+
+**server/dirsrv.c
+***Removed global queues: gc_last_refQ, gc_last_ref_auxQ
+***Change of garbage collection algorithm.
+
+**server/ed_obj_info.c
+***These attributes handled specially:X-GC-AYG-REPLY, X-GC-AYG-END-NOTIFICATION
+***Removed most of special-purpose code -- a call to subfunction
+in lib/psrv/gc_refresh_object.c
+
+**user/newvs.c
+***If we are using the garbage collector, then set garbage-collection
+attributes of objects when you create them 
+
+**vln.c
+***changed parsing from sscanf() to GOSTlib's in_line().
+
+
+*Changes to Prospero, committed 12/23/97  Author: Steve Augart with Sung-Wook Ryu
+
+**Summary
+
+The goal of these changes was to improve the performance of garbage
+collection.   We did this by reducing  the number of times objects need
+to be written out to the database.  It used to be that objects were
+written to the database whenever any modification was performed on
+them; in the common case, this was when they had had
+garbage-collection attributes changed.  Now, we cache dirty objects
+instead of writing them, when the only change to the object is to one
+of the two garbage-collection-specific attributes EXP (expiration
+time) or LAST-REF (Last time referenced). 
+
+These changes also make it possible to retrieve the EXP, LAST-REF, and
+TTL variables.
+
+**Possible improvements: 
+***Turn dsrobject into dsrobject_OBP().  
+Any modifications made to the object would be reflected immediately in
+the read cache.  Combined with add_to_cache_OBP(), this could lead to
+substantial savings in copying expense.  This appears reasonable.
+
+***Cleanup routine to write out dirty data when the server is otherwise idle.
+We could also try to do this only when the host's load is low.  However, the
+expense of checking the UNIX load average might make this an overall lose.
+
+**Overall technical change
+We replaced all the garbage collection oriented calls to dswobject()
+with a two-line sequence of code that marks the object dirty and then
+writes it out.  
+
+**Files changed
+***lib/psrv/dsrobject.c
+****Broke out code into New function (improved modularity): update_pos_object_gc_attributes
+****Call add_shadow_entry_to_cache_by_hsoname() after updating GC attributes
+***lib/psrv/dswobject.c
+Commenting improvements.  Discuss strange behavior of cache on write
+failures.
+***lib/psrv/gc_refresh_object.c
+****Call add_shadow_entry_to_cache_by_hsoname() after updating GC attributes
+***lib/psrv/shadow_cache.c
+****New interface: add_shadow_entry_to_cache_by_hsoname()
+****Setting the cache size to a negative number now means 'unlimited size'.
+****The Cache default maximum size is -1 (unlimited) when using garbage collector
+****We now don't throw away dirty data when cleaning the cache.
+
+***server/get_obj_info.c.
+We now can use GET-OBJECT-INFO to read the special object attributes TTL,
+EXP, and LAST-REF.  Of course,  LAST-REF is always updated to the
+present time before we read it; will need a new option to
+GET-OBJECT-INFO to change that.
+***include/pfs.h
+****Improved a few comments.
+****Added P_OBJECT_DIRTY_GC_DATA flag value for 'flags' member of P_OBJECT structure.
+****Removed dead function prototype (p_timetoasn())
+***include/psrv.h
+New interface: add_shadow_entry_to_cache_by_hsoname
+***lib/psrv/atnames_parse.c:
+Note that this code is actually never used in the current
+implementation.  Added comments.
+***Makefile.dependencies in most directories (remade in all; only some changed)
+
+**Need to do:
+***Make ardp/Makefile.dependencies use $(GOSTLIB_DEPENDENCIES) 
+when appropriate.
+***Add oldest_dirty_obj variable to object caching code
+
+*Changes done 12/24/97, 12/26/97 and 12/29/97, committed 12/29/97.  Author: Steven Augart
+**Added a routine to be called whenever the server is idle:
+   gc_cache_write_oldest_dirty_ob()
+Will return -1 if there is no dirty data to write out; otherwise
+writes out the oldest dirty object and returns the exit status of dswobject(). 
+**Fixed bug where items stayed in the cache more than once.
+**Fixed bug where shadow_file member was not always set on an object before it was written to disk.
+**Improved status information when DIRSRV starts up
+***Now we list the arguments it was invoked with
+***Now we display correct database information when using a GDBM database.
+***Don't display names of Root or Security or AFTP directories unless they are set.
+**New interfaces added to GOSTLIB:  qsprintf_GSP(), vqsprintf_GSP().
+**Fixed bug in value of P_OBJECT_DIRTY_GC_DATA flag -- used to overlap with other flags.
+**New interface to PSRV library: dswobject_by_shadow_filename()
+**Fixed bug in gc_find_vlink():  Now returns NULL if object not found.
+
+**Lesser Changes
+*** The (*changed_object_handler)() PSRV-library-user-settable variable now called only if hsoname is set in an object.
+This is ok because that interface is not being used.
+***Deprecated global variable "gc_shadow_cache_oldest_dirty_obj" from the status of a PSRV library interface.
+
+**Trivial Changes
+***Updated a few copyright notices
+***Promoted a couple of prototypes to 'const char[]' instead  of 'char []'
+***Added new comments and updated confusing comments in some routines.
+
+**Files changed
+Changes gostlib/Makefile lib/psrv/shadow_cache.c include/pfs.h
+include/psrv.h lib/ardp/unixerrstr.c lib/pfs/del_vlink.c
+lib/pfs/vl_attribute.c lib/psrv/dswobject.c
+lib/psrv/read_shadow_entry.c lib/psrv/shadow_cache.c server/dirsrv.c
+
+**Files added
+gostlib/qsprintf_GSP 
+
+*Change made and committed 12/30/97, author: Steven Augart
+
+This change fixes a bug reported by Sung-Wook Ryu
+
+**We now construct proper prospero-format doubly-linked-lists when we 
+create the EXP, TTL, and LAST-REF attributes.  We used to make
+singly-linked lists.  This could cause code modifying those attributes
+to fail an assertion check. 
+
+**File Changed
+server/get_obj_info.c
+
+*Change made and committed 1/8/98, author: Steve Augart
+Thanks to Eul Gyu Im <egim@ISI.EDU> for finding these glitches
+
+**Fixed incorrect dependencies file (lib/psrv/Makefile.dependencies) which
+referred to a non-existent include file.
+**Fixed typo that had crept into lib/psrv/read_shadow_entry.c
+
+
+*Changes made 1/8/98.  Authors: Steve Augart and Dongho Kim
+These changes were made to port Prospero to LINUX properly.
+**Fixed bug whereby little-endian architectures would not properly stamp ARDP replies with a total # of packets.  This made ARDP servers unusable on Intel 80x86 architectures.
+**Fixed glitch in installation of .h files.
+**Added INTELX86 machine type
+**Added LINUX to list of supported operating systems.
+**Added comments to ardp/ardp.h about network vs. host byte order.
+**Fixed some compilation warnings under Linux
+**Added compilation_directory[] to variables the server knows about.
+(Still not reported in PSTATUS message, though.)
+**Starting work on cleaning up error messages from compiling the menu client.
+
+*Changes made 1/13/98.  Authors: Steve Augart and Dongho Kim
+These changes were made because the LINUX port we had started failing
+to compile under a new LINUX installation (2.0.31).
+**Known LINUX-specific Bugs:
+Still the case that user/vfinger fails in odd ways, including by
+complaining of a bad recvfrom() and by claiming that p_get_dir_list()
+is attempting to free RREQs that are still on the active queue.  
+**lib/ardp/ardp_pr_actv.c:  Additional debugging messages around the recvfrom().
+**lib/ardp/pmachine.h: Added more LINUX support, comments describing how to configure for LINUX.
+**lib/ardp/unixerrstr.c: Additional comments, added const to prototypes.
+**lib/pfs/p__req.c: Bizarre bug appeared in Linux 2.0.31 where u_long was not always being defined, although it is needed by <arpa/inet.h>.  We have a workaround.
+**user/menu: Added a couple of prototypes.
+**user/vcache/ftp.c: 
+***Added a few 'const' types.  
+***Turned 'struct fd_set' into 'fd_set'  (The GNU C libraries that the Linux 2.0.31 distribution uses don't appear to have a 'struct fd_set' type.)
+
+
+*Changes to ARDP committed 1/14/98.  Author: Steve Augart, Gayatri Chugh
+
+**Updated the sample server and client. -- considerable expansion of it.
+***Added more tests to the complex server, and nice formatting.
+***Client now compiles without any GNU warnings.
+***Makefile now includes proper options.
+***README updated.
+***share.c has slightly nicer messages.
+
+**ardp.kerberos_srvtab configuration variable added.
+***appropriate changes to ardp.h, ardp_initialize.c
+
+**Facilities added authentication_kerberos to get self principal name.
+***We fill in the KERB_REMOTE_CLIENTNAME member of the mech_spec field.
+
+**top PROSPERO Makefile.boilerplate:
+***Added definition for ARDP_LIBS and ARDP_LIBS_DEPENDENCIES
+
+**Cosmetic changes
+***turned a while loop into a for loop where we dump some information -- saves space
+***Added comments to authentication_kerberos.c
+
+*Changes to ARDP made 1/15/98.  Author: STeve Augart
+**Sample server and client.
+Merged the sample/README in.  
+***Made sure our sample client and server do everything 
+They have the functionality of Gayatri's 
+**We are now able to get rid of the old /nari/prospero-ardp-v1-development.  Will delete when convenient.
+
+
+*Changes to ARDP 1/15/98 --- 1/18/98, Author: Steve Augart
+**Rewrote integrity_kerberos.  Works now.  
+**Wrote privacy_kerberos twice.  Works.
+Involved significant changes to the processing routines.  
+***Corrected dozens of little bugs.  
+***Added lots of debugging code.
+***Still problem -- kerberos authentication will corrupt.
+
+
+
+*Changes made and committed 1/30/98, Author: Steven Augart
+**Summary: These changes fix bugs in the caching code.
+
+**include/pfs.h:
+***inc_native member of VDIR and P_OBJECT structures turned into enum.
+**include/psrv.h
+***gc_shadow_cache_oldest_dirty_obj no longer exported.
+***new interface:  dswobject_by_shadow_filename_dont_update_cache()
+**psrv/db_store.c
+***Now refuses to compile if no database method defined.
+**psrv/dswobject.c
+***Special calls so that we can write out cached data without messing with the cache.
+***error checking for inconsistencies when writing out objects.
+**psrv/shadow_cache.c
+Much code rewritten here, to fix crashes.
+***Added CACHE_OLDEST_DIRTY compilation flag
+We now don't keep the gc_shadow_cache_oldest_dirty_obj variable.
+***added internal consistency checks in code.
+**server/dirsrv.c
+***More comments added.
+***Minor improvements to debugging messages.
+
+*Change committed 2/2/98
+**gostlib/gl_internal_err.h: assert() macro is now an expression yielding void,
+just like in the ANSI standard.
+
+*Prospero Change committed 2/3/98.  Authors: Sung-Wook Ryu and Steve Augart
+**Summary:
+These changes include a speedup; the time to retrieve a cached object
+is now cut in half.  This change was done by Sung-Wook Ryu.  Sung
+achieved it by making objects that are actively processed contain a
+reference to the cached objects which they depend upon.  This makes it
+easy to update the garbage-collection information when an object is
+manipulated. 
+
+These changes update the Prospero server's shadow cache handling
+routines by supporting multi-threaded servers.  They include a
+reference-counting system applied to objects in the cache.
+
+*Changes to ARDP committed 1/29/98,  Author: Steve Augart
+
+**SUMMARY
+**The major change to ARDP is that the Kerberos authentication, integrity, and privacy all work properly now.
+**The next most important change is that the sample programs reflect all of ARDP's functionality.
+
+There were lots of minor changes, only some of which are listed below.
+
+**ARDP files added: 
+ardp_errmesg.c ardp_errmesg.c.h ardp_sealloc.c ardp_sec_config.h
+ardp_sec_members.h authentication_asrthost.c context_failed.c
+find_krbauth_secref.c make_PTEXTs_from_krb5_data.c
+make_krb5_data_from_PTEXTs.c privacy_kerberos.c processing_state_str.c
+sample/.cvsignore writing_security_contexts.txt devtools/Makefile
+devtools/Makefile.dependencies devtools/emacs-defs.el devtools/freeze
+devtools/psecstatus.c devtools/test_ardp_memcpy2.c
+devtools/version.200
+
+**ARDP Files Changed
+Makefile Makefile.dependencies ardp.h ardp_initialize.c
+ardp_labels_cos_alloc.c ardp_mutexes.c ardp_pr_actv.c
+ardp_req_security.c ardp_respond.c ardp_retriev.c ardp_rqalloc.c
+ardp_sec.h ardp_sec_commit.c ardp_sectype.c ardp_sectype_ioctl.c
+ardp_send.c ardp_showbuf.c ardp_snd_pkt.c authentication_kerberos.c
+class_of_service_tags.c client_verify_message_kerberos.c
+dispatch_svc.c gl_log_msgtypes.h integrity_checksum.c
+integrity_kerberos.c integrity_kerberos_create_server.c mitra_macros.h
+myhost.c process_contexts.c sample/Makefile sample/README sample/TAGS
+sample/client.c sample/sample.h sample/server.c sample/share.c
+unixerrstr.c v1-rewrites
+
+**Added ardp_err_text list of warning messages.
+**added routines to allocate and deallocate ardp_sectype structures
+**Added MBZ members to RREQ structure to ferret out corruption.
+**New ARDP_CRITICAL_SERVICE_UNRECIPROCATED error
+**Kerberos SRVTAB location is now configurable.
+**Server Principal name is now configurable.
+**Added sequence numbers to security context blocks.
+**ardp_ptalloc.c: Reordering of code to match order of structure members.
+**Memory leaks fixed in allocation and freeing of requests.
+**Cleaned up unnecessary members of ardp_sectype structure.
+**Added guide to writing ARDP security contexts..
+
+
+*Gostlib changes committed 2/9/98.  Author: Steve Augart
+**New files: gostlib/gl_bstcopy.c gostlib/uid_to_name.c gostlib/strnlen.c
+**stcopy_GSP() can now take a NULL GSP argument.
+**New gl_bstcopy() interface.
+**New strnlen() interface.
+**new gl_uid_to_name_GSP() interface.
+**Error codes in perrno.h are now inside enum p_errcode and a warning enum.
+
+*Prospero changes committed 2/9/98.  Author: Steve Augart
+
+**Makefile, 
+***development routines added; I left them commented out
+**Makefile.boilerplate
+***Made REAL_TARGETS makefile variable optional
+Only need it when using a version of Make that doesn't support .PHONY
+**TAGS: updated
+**copyr: Updated
+**various Makefile.dependencies: Updated
+
+**include/pfs.h
+***version updated to P5.4
+***ACL_PRIVACY, ACL_INTEGRITY, ACL_LABEL_COS added
+***Comments enhanced
+***Added obwhenfree() interface.
+***v1 authentication variable prototypes added.
+
+**include/psrv.h
+***Added SCA_NAMED ACL check.
+***Added support for GOSTLIB_DIRECTORY in Makefile.dependencies.
+
+**lib/pfs/acltypes.c
+PRIVACY,INTEGRITY,LABEL-COS types added.
+
+**lib/pfs:
+Various functions had support added for p__start_req() returning NULL.
+**lib/pfs/p__req.c:
+
+***uid_to_name() made into utility function gl_uid_to_name_GSP()
+***p__start_req() modularized: v0 and v1 authentication.
+***Removed old dead code.
+
+
+**lib/pfs/p_uln_index.c
+***p_uln_lastcomp_to_linkname_GSP() now returns its answer as well.
+Also takes a NULL argument for the GSP.
+
+**lib/pfs/perrmesg.c
+Added support for an ARDP-specific error message list, in
+ardp_errmesg.c.h.
+
+**lib/pfs/scan_error.c
+***Added support for VERSION-NOT-SUPPORTED error message.
+
+**lib/psrv/change_acl.c
+***Added v1_srv_add_client_to_acl().
+***Changed some static  _GSP() interfaces to return char * 
+and accept NULL as the GSP argument.
+
+**lib/psrv/check_acl.c
+***Added support for 'y' right -- list a NAMED acl, but not the ones that include it.
+***Added support for new PRIVACY, INTEGRITY, and LABEL-COS ACL types.
+***Added support for ARDP-v1 Kerberos authentication.
+***Added support for INCLUDE ACL type.
+
+**lib/psrv/plog.c:
+Log principal according to information provided by ARDP-v1.
+
+**server/create_obj.c:
+Minor code efficiency cleanup.
+
+**server/dirsrv.c
+***Added compilation_directory information to STATUS message.
+
+**server/list_acl.c
+***Added check for Y privilege for NAMED ACLs.
+
+**user:
+Programs that directly call p__start_req() now test for NULL return.
+
+
+**user/list_acl.c
+***Added display message if ACL is empty.
+
+**user/padmin.c
+***Corrected reading of 'progname' -- now get that automatically.
+***Replaced special code with call to gl_uid_to_name_GSP().
+***Some functions (add_stdin_as_token()) now return enum p_errcode, not int.
+
+
+**user/vcache
+***Added some declarations in vcache.h, moved some prototypes out of the
+.c files.  
+***Turned some old-prototypes to ANSI prototypes.
+***Other code cleanup.
+
+*Changes to Prospero and ARDP committed 2/12/98.  Author: Steve Augart
+**Summary
+The purpose of these changes is to do preparation for the release.
+
+**General
+***Working on excising all old copyright notices from Prospero.  
+Some progress; not complete
+***Old README moved to old_release_notes/README.Alpha.5.3
+***Old CHANGES moved to old_release_notes/Changes.Alpha.5.3
+***Wrote new README.html release notes.  It includes a list of available documentation.  A short list.
+***Rewrote SUPPORTED -- what is supported.
+***New TAGS tables and Makefile.dependencies.
+***Added misc/make_dist shell script to make distribution.
+
+**ARDP:
+***Renamed ardp_int.h to ardp__int.h
+***Added new ardp_time.h include file, so we can publish timeval functions.
+***Moved ARDP documentation (ardp_api_v0.html, writing_security_contexts.txt) to new ardp/doc subdirectory.
+****Added other documentation to that new directory too, stuff formerly just on the web page.
+***Now include ardp/ardp_sec_members.h as a standard include file.
+
+**PFS library:
+***p_reject_if_peer_does_not_reciprocate is now zero by default.  
+Necessary so you don't get errors if not kinit'd.
+***Improved performance of p__re_comp_exec(); we now check if the regexp was already compiled.
+***ardp/pmachine.h's NOREGEX feature test is now P__NOREGEX.
+***lib/pfs/new_pfs_security.html
+****Got rid of development-specific notes (saying that certain things didn't work, etc.)
+****Removed most references to this being NEW.
+****Added discussion of p_reject_if_peer_does_not_reciprocate.
+
+**Clients
+***Disabled compilation of user/mkreplica; had bugs.
+***Removed some development lines from user/Makefile
+
+**Files added
+
+README.html, lib/ardp/ardp_time.h, misc/make_dist,
+old_release_notes/CHANGES.Alpha.5.3,
+old_release_notes/README.Alpha.5.3
+
+**Files removed:
+
+CHANGES, lib/ardp/ardp_api_v0.html, lib/ardp/ardp_int.h,
+lib/ardp/writing_security_contexts.txt
+
+**Files modified:
+
+Changes, README, SUPPORTED, TAGS, copyr, include/pfs.h,
+include/ppasswd.h, include/pprot.h, lib/ardp/Makefile.dependencies,
+lib/ardp/ardp.h, lib/ardp/ardp__int.h, lib/ardp/ardp_accept.c,
+lib/ardp/ardp_get_nxt.c, lib/ardp/ardp_pr_actv.c,
+lib/ardp/ardp_respond.c, lib/ardp/ardp_retriev.c,
+lib/ardp/ardp_retriev_nxt.c, lib/ardp/ardp_send.c,
+lib/ardp/ardp_srv_ini.c, lib/ardp/ardp_timeouts.c,
+lib/ardp/authentication_kerberos.c, lib/ardp/next_activeQ_timeout.c,
+lib/ardp/pmachine.h, lib/ardp/time.c, lib/filters/flist2string.c,
+lib/filters/helpers.c, lib/filters/reorder_dir.c,
+lib/pfs/Makefile.dependencies, lib/pfs/add_v1_authentication.c,
+lib/pfs/fl_insert.c, lib/pfs/mkdirs.c, lib/pfs/new_pfs_security.html,
+lib/pfs/pmap_nfs.c, lib/pfs/re_comp_exec.c, lib/pfs/readheader.c,
+lib/pfs/strccmp.c, lib/pfs/vl_delete.c,
+lib/psrv/Makefile.dependencies, lib/psrv/retrieve_fp.c,
+lib/replica/Makefile, lib/replica/Makefile.dependencies,
+misc/osetenv.c, server/Makefile.dependencies, server/create_link.c,
+server/forwarded.c, source-hfiles, user/Makefile,
+user/Makefile.dependencies
+
+
+*Changes to Prospero checked in 2/12/98.  Author: Steve Augart  
+
+**Summary
+These changes fix little glitches noticed when we unpacked and
+installed the first trial release.
+
+**Files Modified:
+
+Changes INSTALLATION Makefile.config-dist README.html include/pfs.h
+include/pserver.h-dist include/psite.h-dist lib/pfs/re_comp_exec.c
+lib/psrv/change_acl.c misc/make_dist
+
+**Updated pfs.h -- now 5.4 alpha 1.
+**include/pserver.h-dist: old PSRV_KERBEROS is obsolete.
+**include/psite.h-dist: Added comments.  Moved old stuff to end.
+**Reverted back to old re_comp_exec.c.
+**Improved misc/make_dist
+
+
+*Released Prospero 5.4 alpha 1
+
+
+*Changes to Prospero checked in 2/24/98.  Author: Steve Augart
+
+**Installation and Configuration
+***Updated configuration procedure so that you don't need Kerberos.
+***We don't use the ardp_sectype structure if ARDP_NO_SECURITY_CONTEXT is defined.
+***Explained that you might need to modify ardp_sec_config.h
+***We now do not require the users to copy psite.h or pserver.h.
+***Improved INSTALLATION document further.  Added simplifications.
+***Made misc/make_dist produce an easier distribution, reflecting simplifications
+
+**Updated README.html to Prospero 5.4 alpha 2.
+***Got rid of dead top-level README file.
+
+**Files changed
+Changes INSTALLATION README.html include/pfs.h ardp/Makefile.config.ardp-dist
+ardp/processing_state_str.c
+ardp/ardp_sealloc.c ardp/ardp_sec_config.h
+lib/pfs/add_v1_authentication.c lib/pfs/p__req.c include/pfs.h
+lib/psrv/change_acl.c lib/psrv/check_acl.c misc/make_dist
+
+**Files added
+ardp/ardp_sec_config.h-dist
+
+**Files Removed:
+README
+
+*Changes to ARDP checked in 3/3/98.  Author: Steve Augart
+
+**Summary
+
+These changes fix an endian-ness bug that appeared on the Intel x86
+architecture.  When specifying a port number as part of a hostname
+(e.g., PROSPERO.ISI.EDU:1525), then the port number was not converted
+properly into network byte order.  This caused the message to go to
+the wrong destination (i.e., into the bit-bucket).  This bug has been
+fixed.
+
+**Additional changes
+***Warning about "%lx" format not matching int argument eliminated
+LINUX makes the s_addr member of the in_addr structure an int where
+other systems historically have it as a long; we adjust for this with
+a cast.
+***Pass a null pointer as NULL instead of as 0 in user/pstatus.c
+
+**Files Changed
+Changes, ardp/ardp_send.c, ardp/ardp_xmit.c, ardp/hostname2adr.c, user/pstatus.c
+
+*Change to PFS library committed 3/4/98
+**PFS library now compiles even with SUPPORT_REPLICA undefined.
+This error had been introduced by checking in replica code without
+testing it on a non-replica system.
+
+*Change to PFS library committed 3/5/98.  Authors: Dongho Kim and Steve Augart.
+This change fixes a bug whereby clients using the old
+pre-ardp-security authentication mechanism were not generating proper
+security information was not  generating proper security information
+for hosts whose names met the format "hostname:ip-portnum".  This
+turned out to be a one-character typo; "#ifndef" instead of "#ifdef".
+
+**Files changed
+Changes, lib/pfs/p__req.c
+
+*Changes to ARDP documentation, committed 3/27/98; Authors: Steven Augart and Katia Obraczka
+
+**Updated documentation for release of ARDP 1.0
+
+**Files changed
+ardp/doc/ardp_api_v0.html ardp/doc/ardp_protocol_sec_context.html
+ardp/doc/ardp_faq.html 
+
+
+*Changes to ARDP, committed 3/27/98.  Authors: Steve Augart with Katia Obraczka
+
+**Wrote release notes, distribution-making script, and INSTALLATION instructions.
+**Files added to ARDP directory:
+ardp/README ardp/make_ardp_dist ardp/INSTALLATION
+
+
+*Changes to ARDP, committed 4/9/98.  Author: Steve Augart
+These changes do some cleanup on the ARDP 1.0 release.  
+**Changes
+***Improved various Makefile.*.config comments slightly.  
+***Fixed typo: -DARDP_NO_KERBEROS is now spelled correcdtly
+***GOSTLIB_DIRECTORY is appropriate for the release.
+***make_ardp_dist is fixed.
+
+**Files Changed
+ardp/Makefile.config.ardp-dist, ardp/README, ardp/make_ardp_dist,
+ardp/v1-rewrites, gostlib/Makefile.config.gostlib-dist
+
+
+*Changes to  ARDP, committed 4/9/98.  Author: Steve Augart
+More cleanup on ARDP 1.0 release
+**ardp/ardp_sealloc.c now compiles without Kerberos
+**make_ardp_dist adds -P flag to cvs checkout (prune empty directories)
+**ardp/sample/Makefile now works out of the box
+**ardp/sample/sample.h changed, so 3 loops is the default.
+
+*Change to PFS library committed 5/6/98.  Authors: Steve Augart and Dongho Kim
+
+**lib/pfs/p__req.c
+Used to fail when unable to resolve a hostname.  This bug was
+introduced when we #undef'd OLD_GETHOSTBYNAME_WAY in p__req.c.  The
+bug only appears when using the old version 0 AUTHENTICATE commands;
+when using the security context, this is bypassed.
+
+*Change to Prospero replication committed 5/12/98.  Author: egim 
+
+**File changed
+lib/replica/srv_propagate_update.c
+
+*Changes to Prospero committed 5/13/98.  Author: Steve Augart <swa@ISI.EDU>
+This checks in changes that I had made in the
+/nfs/gost/products/prospero/working/ardp-security-pinteg ($pa) area.
+These changes are in the area of cleanup, and do not provide new
+functionality.
+
+**Changed copyright notices in many files.
+We no longer include  <uw-copyright.h> and <usc-copyr.h>; all is now
+the new license, <usc-license.h>.  I wrote various search patterns to
+match and convert all the copyright notices.  
+
+**Specific Files changed:
+***Changes:Fixed formatting (conflict had been checked in).
+***INSTALLATION: Improved directdions.
+***doc/library.PS, doc/manual.PS, doc/menu_api.PS, doc/protocol.PS: Re-created.
+**lib/psrv/wais_gw/*.c:
+Changed code to call Prospero's myhostname() function instad of
+gethostname().
+**server/dirsrv.c
+Updated threading documentation.
+**Killed off <posix_signal.h> and all references to it.
+**gostlib/usc_license.h:
+Corrected some contributor information.
+**gostlib/list_macros.h:
+Updated commands slightly, slightly played with formatting.
+**ardp/client_verify_message_kerberos.c: 
+Removed, no longer used.
+**ardp/mitra_macros.h:
+***Documentation and formatting added.
+***do/while wrapped macros.
+**ardp/myhost.c
+Improved documentation and detection of C library errors.
+
+*Changes checked in 5/14/98
+These changes fix a bug vln displayed in resolving names where a link
+contains special characters that need to be quoted.  (e.g., the
+colon (:) character).  
+
+VLN used to have its own special knowledge about how the Prospero name
+resolution system worked.  That knowledge has now been encapsulated in
+a new library function, p_rd_vslink_attrib().
+
+**Files changed
+include/pfs.h, user/vln.c, lib/pfs/rd_vlink.c, Changes
+
+
+*Changes to ARDP and Prospero committed (to branch ARDP_multithreaded_client) in 6/30/98.  Authors: Nader Salehi and Steve Augart
+
+These changes fully multithread the ARDP and Prospero clients.  
+**The multi-threading package now uses the  gl_threads.h include file, not pfs_threads.h
+***We no longer support anything other than the official Posix standard for threads.
+***We converted the special wrapper macros to the standard Posix forms.
+e.g., p_th_create_thread to pthread_create.
+***We use TSD, when necessary, instead of the old home-brewed AUTOSTAT forms.
+**ARDP clients may be multi-threaded.
+**Prospero clients may be multi-threaded.
+***All thread-unsafe code was removed from the PFS library.
+We used mutexes in order to maintain synchronization in all
+thread-unsafe code that we could not remove.
+
+*Changes to ARDP and Prospero committed (to branch ARDP_multithreaded_client) 7/1/98.  Author: Steve Augart and Nader Salehi
+
+These changes make the sources compile cleanly without GL_THREADS
+being defined.
+
+*Changes to ARDP and Propero committed  (to branch ARDP_multithreaded_client) 7/8/98.  Author: Steve Augart and Nader Salehi
+
+These changes correct small problems observed while testing the web
+proxy server in multi-threaded mode.  We got rid of some code
+which expected to be invoked only by the master thread.
+
+We ran Purify and caught some memory leaks.
+
+*Changes to ARDP and Propero committed  (to branch ARDP_multithreaded_client) 7/8/98.  Author: Steve Augart and Nader Salehi
+
+Made some updates for the impending release of ARDP version 1.1.  We
+realize that this branch (ARDP_multithreaded_client) has not been
+merged with the latest changes to the master ARDP and GOST sources;
+these should be reconciled before we ship.
+
+**Files Changed:
+ardp/INSTALLATION, ardp/README, ardp/make_ardp_dist
+
+*Changes to ARDP and GOSTLIB committed (to main branch) 7/9/98.  Authors: Nader Salehi and Steven Augart
+
+We merged in all changes from the branch ARDP_multithreaded_client
+runback into the main trunk, preparatory to releasing ARDP 1.1 and Prospero
+5.5.  
+
+This batch of checked-in code resolves the conflicts in lib/ardp and
+lib/gost.  We tested the ARDP sample clients using the changed code.
+
+The main change here affects Prospero: The top-level directory gostlib
+has moved to lib/gost in the Prospero distribution.  This affects the
+procedure we use at ISI to check out new build trees, and also affects
+the existing trees when you do a 'cvs update'.  See Steve <swa@ISI.EDU> for
+help with this.
+
+*Change to ARDP and GOSTLIB and Prospero committed (to main branch) 7/15/98.  Authors: Steve Augart and Nader Salehi
+
+This change may finalize the work done on ARDP release 1.1.  The final
+release will be tagged appropriately.
+
+This change includes a merging in from the branch
+ARDP_multithreaded_client, done on 7/14/98, 6 PM PDT.  That branch
+should be dead now.  The merge point was tagged as
+merged_from_ARDP_multithreaded_client_to_trunk.  (If any resurrection
+is attempted, you know where to start the merge from next time.)
+
+**Fixed bug in ardp/client_daemon.c -- we now don't time out inappropriately
+on some messages.
+**Fixed bug in ardp/client_dameon.c:  We can now retransmit appropriately.
+**ardp/sample/mt-client.c: mt-client now takes new options, -m and -t
+***ardp/sample/README updated to mention new options.
+**ardp/sample/client.c: New options: -m and -p, generates child processes.
+**Made 'make clean' work -- fixed broken REAL_TARGETS in Makefile.boilerplate.
+**Updated lib/ardp/Changes file to document its retired status.
+**Added guiding commentary to start of top-level Changes file.
+**Modified distribution script (ardp/make_ardp_dist) to include Changes.
+And other minor changes to the distribution script.
+**Minor changes:
+***GOSTLIB: strnlen() prototype to <gl_strings.h>
+***GOSTLIB: strnlen() now yields a size_t.
+***Fixed all dependencies files
+
+* End of Data
+Ignore anything after this line.
+
+;; Here are some EMACS variables that can be helpful.
+;; Local Variables:
+;; mode: outline
+;; tab-stop-list: (3 6 9 12 15 18 21 24 27)
+;; End:
+

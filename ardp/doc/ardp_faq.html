@@ -1,0 +1,146 @@
+<TITLE>ARDP Frequently Asked Questions</TITLE>
+
+<H1>ARDP Frequently Asked Questions </H1>
+
+<H2> How does ARDP compare to existing transport protocols? </H2>
+
+<ul>
+<li>ARDP is designed for a request/response style of interaction.
+<li>ARDP is lighter-weight than TCP regarding connection setup and
+tear-down costs.  
+<li>ARDP is built on UDP, the User Datagram Protocol on top of IP.
+Unlike UDP, ARDP supports multiple independent connections.
+<li>An ARDP server can have thousands of queued requests.  This is
+used by heavily loaded services, such as the archie servers.
+<li>ARDP V1 carries and processes security information in the transport
+layer.
+</ul>
+
+<H2> What is ARDP's acknowledgment policy and mechanism? </H2>
+
+ARDP uses both implicit and explicit acknowledgments.  Clients and
+servers use the <I> received through </I> field (octets 7 and 9 in V0,
+and 8 and 9 in V1) to piggyback acknowledgments in data packets.  The
+<I> received through </I> value indicates the sequence number through
+which all packets have been received by the sender of the packet. 
+
+<P>
+
+Servers and clients also send explicit acknowledgments to each other.
+For instance, the server sends an ACK back to the client when the
+server receives a multi-packet request from the client.  This is done
+through the <TT> ardp_acknowledge() </TT> call (<TT>ardp_accept()</TT> calls <TT>ardp_acknowledge()</TT>). 
+
+<P>
+
+Note that the server only ACKs the first packet of a multi-packet
+request if it receives a duplicate of it.  If the client times out
+(default timeout period is set to 4 seconds), the client will
+retransmit the request's first packet.   If the server 
+receives this retransmitted first packet, the server will then
+detect that it is a duplicate packet of an outstanding request, and
+will only then ACK it.
+
+<P>
+
+The server can explicitly request an ACK from the client by setting
+bit 7 of octet 11 (option flags) in V0 and bit 0 of octet 1 in V1.
+This is the case when the server sends the last packet of a window, or
+if the server sends the last packet of a reply and the client hasn't
+acknowledged the reduction of a previously requested wait (see <TT>ardp_respond()</TT>).
+
+<H2> What is ARDP's timeout and retransmission policy?</H2>
+
+A client checking for replies retransmits unacknowledged packets.  In
+<TT> ardp_pr_actv() </TT> it checks whether the peer's <I> received
+through </I> is smaller than the total number of packets already
+sent.  In that case, it schedules the retransmission for after it
+detects the receipt of an unsequenced control packet.  
+
+<H2>What are ARDP's flow control mechanisms?</H2>
+
+The client and the server maintain both receive and transmit
+windows. The default client and server transmit window is 16 packets. 
+
+<P>
+
+The client can advertise its receive window to the server. The server
+will then use this value as its transmit window. The client can also
+reset its receive window size to the server, who will go back using
+its default transmit window size.
+
+<H2> What queues does the ISI ARDP implementation manage? </H2>
+<A NAME="queues"></a>
+
+ARDP clients and servers maintain several queues. The <strong>server</strong> maintains
+the following request queues:
+
+<UL>
+
+<LI> <STRONG> ardp_partialQ </STRONG>: holds incomplete requests,
+missing one or more packets.
+
+<LI> <STRONG> ardp_pendingQ </STRONG>: holds pending requests.
+
+<LI> <STRONG> ardp_runQ </STRONG>: holds requests currently in
+progress.
+
+<LI> <STRONG> ardp_doneQ </STRONG>: holds processed requests.
+
+</UL>
+
+On the <strong>client</strong> side, the following queues are maintained:
+
+<UL>
+
+<LI> <STRONG> ardp_activeQ </STRONG>: holds active requests, that have
+been or are being transmitted, but where the server's complete reply
+has not been received.  When they are completed, they are moved to the
+<strong>ardp_completeQ</strong>.
+
+<LI> <STRONG> ardp_completeQ </STRONG>: Holds completed requests.  A
+request may be completed because a complete reply was successfully
+received or because of failure, such as a retransmission timeout.
+<P>
+Completed requests are removed from <strong>ardp_completeQ</strong> as
+soon the application calls <tt>ardp_retrieve()</tt> to retrieve the
+results.  Client applications call <tt>ardp_retrieve()</tt> explicitly
+or via other ARDP API functions that also retrieve results.
+</UL>
+<P>The queues are also discussed <a href="ardp_api_v0.html#queues">in the ARDP API</a>
+
+<h2>What functions can an ARDP server application use to check for requests?</h2>
+
+
+The server checks for new requests and/or replies to its own
+requests using ardp_get_nxt(), ardp_get_nxt_nonblocking(), and
+ardp_get_nxt_all(). 
+
+<UL>
+
+<LI>ardp_get_nxt() returns a request to be processed by the server,
+and blocks of there are no requests. It executes a select loop calling
+ardp_get_nxt_nonblocking().
+
+<LI> ardp_get_nxt_nonblocking() returns the next request to be
+processed by the server; if there is none, it returns NOREQ. It
+calls ardp_accept().
+
+<LI> ardp_get_nxt_all() <i>(available in the client and server)</i> returns either the next reply or the next
+request to be processed by the server. It blocks if there aren't any
+replies or requests ready to process.It calls
+ardp_retrieve_nxt_nonblocking() to check for replies, and
+ardp_get_nxt_nonblocking() to check for requests. 
+
+<li>ardp_get_nxt_all_timeout() <i>(client and server)</i>
+We re-wrote ardp_get_nxt_all() to make it more general. We added a
+timeout and priority options and called it
+ardp_get_nxt_all_timeout(). The <b> ttwait </b> parameter gives the
+timeout period in microseconds, and <b> priority </b> can be either
+<b> ardp_port </b> , in which case ardp_get_next_all_timeout() checks for
+replies before requests, or <b> ardp_srvport </b> or <b>
+ardp_prvport </b>, which gives priority to requests over replies.
+</UL>
+
+<P>
+These functions are further described in the <a href="ardp_api_v0.html">ARDP API</a>.

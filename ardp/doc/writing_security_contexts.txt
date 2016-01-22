@@ -1,0 +1,85 @@
+How to write an ARDP Version 1 security context.
+--Steven Augart, 1/16/98.  Revised 2/10/98
+
+
+Your context will provide one of the following five services (listed
+in ardp/ardp_sec.h):
+	PAYMENT, INTEGRITY, AUTHENTICATION, PRIVACY, LABELS
+
+Name your context.  Add the full name to the appropriate list of
+'mechanisms' in ardp_sec.h.  For instance, the authentication
+mechanism list looks like this:
+
+   enum ardp__sec_authentication_mechanism {
+       ARDP_SEC_AUTHENTICATION_KERBEROS = 1,
+       ARDP_SEC_AUTHENTICATION_ASRTHOST = 2
+   };
+
+
+Create a file, such as authentication_kerberos.c.
+
+Define an ardp_sectype structure for your mechanism in that file.  For
+instance:
+
+	const ardp_sectype ardp_sec_integrity_kerberos {
+	...
+	}
+
+Add a C declaration of your mechanism structure to the ardp_sectype member
+in ardp/ardp_sectype.c.
+
+Provide a 'parse_args' function for the clients to call through
+ardp_req_security().  This is called through the ardp_sectype.  This
+does as much work as it can to prepare the request before committment.
+
+Provide a 'commit' function.  This is called on the client by
+ardp_send(), when the application actually commits the message.  It is
+also called by ardp_respond() on the client, when the application
+signals that a complete response has been prepared.
+
+The commit function sometimes (e.g., Kerberos authentication) just
+copies the information prepared by parse_args (on the client) or by
+the verification/acceptance function (on the server) into the final
+security structure.  It might do more work, though, (e.g., Kerberos
+integrity) since the commit function is called when the entire message
+is ready, whereas when the parse_args function is called we are not
+sure whether the payload message and the contexts are ready yet.
+
+When the server receives your complete message, it calls
+ardp__sec_process_contexts() and pastes together the complete security
+context you transmitted.  ardp__sec_process_contexts() passes the
+pasted-together megablock to do_security_context().
+do_security_context() chops up the megablock into individual security
+context blocks, and feeds them individually to the function:
+ardp__sec_dispatch_service_receiver().
+
+To feed this dispatch function, you need to provide a server-side
+verification/acceptance/processing/decryption/receipt function.
+(e.g.: ardp__sec_authentication_kerberos_server_verify_message()) The
+server-side function will also have to prepare the response for
+committment.  You will probably end up doing this preparation work in
+a static function that is called by both the server-side verification
+function and the client-side argument parsing function.
+
+You may have an asymmetric protocol.  If you do, then you may need a
+separate client verification/acceptance/processing/decryption/receipt
+function.  This is done in the case of authentication_kerberos, where
+we have a separate function named
+ardp__sec_authentication_kerberos_client_verify_message().  
+
+It can be convenient to test whether we are the client or the server.
+You can do this by testing the value of req->trns; that will be set
+for the client and will be NULL for the server.
+
+Add a dispatch operation to the function(s) in
+ardp__sec_dispatch_service_receiver()(dispatch_svc.c).
+(ardp__sec_dispatch_service_receiver() will later be rewritten, so
+that ardp__sec_dispatch_service_receiver just goes through
+ardp_sectypes, so that you'll never have to modify
+ardp__sec_dispatch_service_receiver()).
+
+The client receipt function sometimes has to find the security context
+block that was used to send the client's request.  This
+request/receipt match-up is easy because the security context blocks
+are numbered.  A response has the same block number as the request
+that triggered the response.

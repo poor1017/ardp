@@ -1,0 +1,82 @@
+Instructions for installing ARDP release 1.1
+Last Modified: (Time-stamp: <98/07/15 11:03:25 swa>)
+ 
+*Requirements
+
+ARDP is designed to compile on systems supporting the POSIX
+programming interface and a sockets-compatible set of networking
+calls.  Systems meeting these standards include UNIX and Unix-like
+systems.
+
+You must compile this release using ANSI C, since it makes use of the
+ANSI C variable-length argument list facilities and of the ANSI
+prototypes.  This should not be a problem unless you are using a very
+old system.
+
+*Configuration
+
+To tailor the server to your systems's configuration:
+
+  copy gostlib/Makefile.config.gostlib-dist to gostlib/Makefile.config.gostlib
+  edit gostlib/Makefile.config.gostlib to meet your needs
+
+  copy ardp/Makefile.config.ardp-dist to ardp/Makefile.config.ardp
+  edit ardp/Makefile.config.ardp to meet your needs
+
+Define your machine and operating system type in
+ardp/Makefile.config.ardp.  If your machine type and/or operating
+system are not listed, you can add them to <ardp/pmachine.h>.  If you
+port the ARDP or GOST libraries to a new machine type or operating
+system, please send us back the changes so that we can include them
+for future use.
+
+**Configuring with compilation problems.
+
+***HP-UX linking problems
+
+Under HP-UX you may get errors while linking.  These will claim that
+some nonexistent member of a library archive (.a file that Prospero
+makes) is not valid.  The errors under HPUX look like:
+
+  /bin/ld: ../lib/psrv/libpsrv.a(): Not a valid object file (invalid system id)
+
+If you get this error, run the shell script misc/hpux_fixlib.csh on the offending archive, like so:
+
+	csh misc/hpux_fixlib.csh lib/psrv/libpsrv.a
+
+The library will now be in a format that the linker will read.
+
+**Configuration fine points
+
+If you want the ARDP server to run multi-threaded, then you must edit
+gostlib/Makefile.config.gostlib to define your current threads package.
+
+As mentioned, this release must be compiled with an ANSI compiler;
+therefore, the default in gostlib/Makefile.config.gostlib is 'gcc'.
+If you're using another compiler, you may want to change the
+definitions of CC and CFLAGS.
+
+*Compiling and Installing
+
+To build the ARDP library, execute the following commands: 
+
+  1.cd gostlib; make 
+  2.cd ../ardp; make 
+
+If you wish to build the sample clients, see the instructions in
+ardp/sample/Makefile.
+
+*Additional information
+
+The directory "ardp/doc" in this distribution contains ARDP
+documentation.  The file README in this directory contains release
+notes for the current ARDP release.  
+
+More information on ARDP and the most current documentation is
+always available as http://gost.isi.edu/info/ardp.  
+
+Bug reports should be sent to all of these three email addresses:
+
+  swa@isi.edu, salehi@ISI.EDU, katia@ISI.EDU, and bcn@ISI.EDU
+
+Requests or queries about the release should be sent to the same.

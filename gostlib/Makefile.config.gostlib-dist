@@ -1,0 +1,185 @@
+## Makefile.config.gostlib
+## RCS Information: $Header: /nfs/gost/CVSroot/gostlib/Makefile.config.gostlib-dist,v 1.23 1998/07/09 22:28:58 swa Exp $
+## The gostlib library (as well as other parts of Prospero and GOST routines) 
+## needs these things defined in it:
+
+
+#### RANLIB
+
+## Some systems (notably SCO Unix, Solaris, SGI, and other Sys-V Unices) do not 
+## need "ranlib" to be run on an archived library after "ar".  If your system
+## is one of them, define this as "echo" or "true".  Otherwise define it
+## as "ranlib".
+## XXX Future Development: This option should automatically be set based upon your operating 
+## XXX system type.
+
+RANLIB = ranlib			# SUNOS, BSD variants, LINUX
+#RANLIB = true Do not need RANLIB after we successfully make a library # HPUX, SYS-V variants
+
+#### AR
+## your archiving program.  You should not need to change this.
+AR = ar
+
+## Define this if you feel like making AR verbose when it builds the libraries.
+## This will give you extra info as it's chugging along.
+# AR_VERBOSE_FLAG=v
+
+ARFLAGS = r$(AR_VERBOSE_FLAG) 
+
+
+##
+## COMPILER SETUP and FLAGS
+##
+
+## Compiler choice.  Prospero must be compiled with an ANSI C compiler.
+## We usually use GCC.
+## Use 'xlc' on an RS6000.
+
+CC	= gcc
+
+## Debugging can be turned off in the distribution in order to keep
+## executables and object files smaller.
+
+## If you turn this off, and then encounter segmentation faults or other 
+## problems, we would appreciate it if you could reset this back to
+## '-g' or '-ggdb3', 'make clean', and recompile the binaries so that we can
+## get a stack trace and other useful debugging information.
+
+# CFLAGS += -g		# For most C compilers.  Leaves GCC with
+			#  adequate debugging information
+CFLAGS += -ggdb3	# For GCC.  Gives additional debugging information.
+			# Note on debugging:
+			# Under Solaris 2.5.1, GDB 4.16, we cannot 
+			# examine variables in inner blocks.  This is 
+			# unfortunate.  --7/97
+
+## Compile without -O (optimizer) for greater compilation speed and 
+## slower execution speed and greater ease in debugging.
+## Without -O, the GCC compiler won't be able to check  uninitialized 
+## warnings as easily.  However, the debugging will be less surprising.
+# 
+## Compiling with -O and some warnings flags is nice to do sometimes if you're
+## doing development.
+
+## If you are using Solaris 2.5.1, you MUST add -D__EXTENSIONS__ in order to
+## make the socket code work; otherwise, the system's <socket.h> file will 
+## give you an error, since it won't know what a u_short type is.  The 
+## u_short type is not part of the 1989 ANSI C standard. (ANSI X3-159.1989).
+## I guess the Solaris engineers must have decided that u_short was an 
+## 'extension.' In any case, you need this.  It won't hurt anywhere else, so
+## I am leaving it turned on by default, even though I don't think any system 
+## but Solaris requires it.  -swa, 7/97
+CFLAGS += -D__EXTENSIONS__
+
+## If building ARCHIE, use -O3, for maximal optimization
+# CFLAGS += -O3
+
+## -pg for performance monitoring
+# CFLAGS += -pg
+
+### WARNINGS and DEVELOPMENT
+###
+### Most of these provide additional optional information for the compiler.
+### I'd recommend you ignore them if you are compiling GOSTLIB, ARDP, 
+### or Prospero for the first time.
+
+
+### The rest of these flags are GCC-specific.
+
+## If you use GCC, you must define __USE_FIXED_PROTOTYPES__ in order to
+## avoid all sorts of obnoxious warnings.  Defining it won't hurt in any case, 
+## even if you're not using GCC, so we leave it on by default.
+
+CFLAGS += -D__USE_FIXED_PROTOTYPES__
+
+
+
+## C Compiler WARNINGS.
+## Turned off for the distribution.  Turned on for development.
+## 
+# include $(GOSTLIB_DIRECTORY)Makefile.config.compiler-warning-flags
+
+## If you're compiling all of Prospero, not just GOSTLIB and ARDP, you 
+## could set additional CFLAGS in the top-level Makefile.boilerplate 
+## file.  You would do this if you had additional options to specify that
+## aren't necessary for the GOSTLIB and ARDP libraries.  Then again, 
+## specifying all of them here won't hurt
+
+## To optimize (tested under GCC):
+## We leave on debugging assertions normally; they are nice, and catch
+## programming errors.
+#CFLAGS += -DNDEBUG
+
+## Under GCC, I found that the best optimization was with these
+## parameters:
+#CFLAGS += -O2 -finline-functions
+
+##
+## This is nice and forceful if we feel strict.  I have not recently tested
+## with it, so it is not guaranteed to work.  --swa, 7/97
+# CFLAGS += -D__STRICT_ANSI__
+
+# CFLAGS += anything else you want to specify here.
+
+## The configuration routines need this definition:
+
+## P_SYSTEM_DIR is the directory where the system-wide configuration file
+## may be found.  It is also useful for including as part of the definition
+## of other configuration parameters.  At this time, it does not serve
+## any other purpose.  This directory is NOT dynamically configurable; it is 
+## only compile-time configurable.
+
+## The configuration routines, with their standard command-line parsing 
+## function,  will let the system-wide configuration file, normally 
+## "P_SYSTEM_DIR/.ProsperoResources", 
+## be superseded by [filename], using the command line option : 
+##	-pcp_system_file: [filename]
+## Any other routines configured to use the P_SYSTEM_DIR
+## will not perform this substitution.  Perhaps they should; on the other 
+## hand, we aren't using it for anything else, so the point is moot for now.
+## More documentation on the configuration routines is in the Prospero source 
+## distribution at:
+##	doc/working-notes/pconfig-*
+
+
+P_SYSTEM_DIR=/usr/pfs
+
+
+CFLAGS += -DP_SYSTEM_DIR=\"$(P_SYSTEM_DIR)\"
+
+
+
+#########################################
+## Threads-specific configuration.     ##
+#########################################
+
+#### Define the threads library we're using. and whether we're using threads 
+#### at all.
+#### Also define any compiler flags that the compiler needs to use the proper
+#### threads library.
+
+#### We currently support only POSIX threads (the 1996 standard, 
+#### which is the most recent one as of this writing.).
+
+#### Define THREAD_LIBS to add the threads library we need to the LIBS list.
+#### XXX Development Note: not all versions of MAKE support +=
+
+#### NO THREADS:
+#### If not using threads, leave this definition active
+THREAD_LIBS=
+
+#### Pure POSIX  (developing under Solaris 2.5.1)
+# CFLAGS += -DGL_THREADS -D_POSIX_C_SOURCE=199506L -D_REENTRANT -D_POSIX_PTHREAD_SEMANTICS
+# THREAD_LIBS = -lpthread -lposix4
+
+#### ANYTHING ELSE for threads
+#### If you're working with POSIX threads on another platform, make sure
+#### that that particular package's libraries are included.
+
+####
+#### The remainder of this file is general boilerplate used by GOSTLIB and 
+#### other GOST group products.
+####
+
+### This target is used by GNU Gmake.
+.DELETE_ON_ERROR:

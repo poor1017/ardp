@@ -1,0 +1,283 @@
+Proposed ARDP V1 Security API
+
+Original: Friday, 3/28/97, swa and katia.
+Revised: 4/1/97, 4/2/97, 4/9/97, swa; 5/8/97, 5/9/97, 8/6/97 katia & swa.
+Revised: 11/6/97, swa.
+Revised 1/13/98, swa and katia
+
+We handle four security services in this API.  Privacy is being
+implemented; authentication, integrity, and labels have been.  Payment
+is only partly addressed by this API.
+	
+This document assumes you've read the ARDP security network protocol
+spec already.
+
+The term "mechanism" here means "security service and mechanism."
+
+Calling signature for the API:
+
+#include <ardp_sec.h>
+
+extern const ardp_sectype const ardp_sec_authentication_kerberos;
+extern const ardp_sectype const ardp_sec_authentication_asrthost;
+extern const ardp_sectype const ardp_sec_integrity_kerberos;
+extern const ardp_sectype const ardp_sec_integrity_crc;
+extern const ardp_sectype const ardp_sec_labels_class_of_service;
+extern const ardp_sectype const ardp_sec_labels_copytags;
+extern const ardp_sectype const ardp_sec_privacy_kerberos;
+
+/* Request a particular security mechanism: */
+extern enum ardp_errcode 
+	ardp_req_security(RREQ req, const ardp_sectype typ, 
+			ardp_sectype **ref, ...);
+
+/* The REF argument is a pointer to a variable of type "ardp_sectype *". Upon
+   return, REF is a handle to the security context block that will be
+   created to satisfy this service.
+
+   REF can be passed as an argument to subsequent calls to
+   ardp_sectype_ioctl().  */
+   
+/* The ... are additional arguments specific to each particular
+   mechanism.   The are described for each mechanism below. */
+
+
+/* Set options for a particular security mechanism. */
+extern enum ardp_errcode
+	ardp_sectype_ioctl(ardp_sectype *ref, ardp_ioctl_t ioctlname,
+		/* IOCTLs may take arguments. */
+		...);
+
+
+
+extern const ardp_ioctl_t ARDP_SEC_CRITICALITY, ARDP_SEC_ME, ARDP_SEC_YOU, 
+	ARDP_SEC_PRIVACY; 
+    
+/* The following are reserved but not yet fully defined: */
+extern const ardp_sectype ardp_sec_labels_pics;
+extern const ardp_sectype payment_netcheque;
+extern const ardp_sectype payment_netcash;
+
+	
+
+FEATURE TESTS:
+
+These feature tests are currently (4/1/97) available in <ardp_sec.h>.
+They are #defined if available; undefined if not.
+
+#define ARDP_SEC_HAVE_AUTHENTICATION_ASRTHOST
+#define ARDP_SEC_HAVE_AUTHENTICATION_KERBEROS
+#define ARDP_SEC_HAVE_INTEGRITY_KERBEROS
+#define ARDP_SEC_HAVE_INTEGRITY_CRC	
+#define ARDP_SEC_HAVE_LABELS_CLASS_OF_SERVICE
+#define ARDP_SEC_HAVE_LABELS_PICS
+#define ARDP_SEC_HAVE_LABELS_COPYTAGS
+#define ARDP_SEC_HAVE_PAYMENT_NETCASH
+#define ARDP_SEC_HAVE_PAYMENT_NETCHEQUE
+#define ARDP_SEC_HAVE_PRIVACY_KERBEROS
+
+
+AUTHENTICATION
+
+Some examples of authentication:
+
+ > extern const ardp_sectype ardp_sec_authentication_kerberos;
+ > ardp_sectype *authref;
+ > RREQ req;
+ > const char remote_hostname[] = "MALTA.ISI.EDU";
+ > const char remote_servicename[] = "sample";
+
+ > ardp_req_security(req, authentication_kerberos, &authref, 
+	/* These arguments are specific to authentication_kerberos: */
+	remote_hostname, remote_servicename);
+
+Here, authentication_kerberos will be a non-critical mechanism.  We
+default intelligently to the meaning 'me; not critical'.  It will get
+credentials for the principal "malta.isi.edu/sample" in the default
+realm.
+
+AUTHREF is a reference to a previously specified Kerberos
+authentication context block.
+
+One may set options: 
+
+Criticality bit (applies to authentication, integrity, or class of
+service.  Encryption is always critical if an encrypted message is
+received.  It may or may not be critical if requested from the peer.)
+
+	ardp_sectype_ioctl(authref, ARDP_SEC_CRITICALITY, 1)
+	ardp_sectype_ioctl(authref, ARDP_SEC_CRITICALITY, 0)
+
+ME/YOU: (We will usually assume that the ME bit is set by default):
+
+	ardp_sectype_ioctl(authref, ARDP_SEC_ME, 1)
+	ardp_sectype_ioctl(authref, ARDP_SEC_ME, 0)
+
+	ardp_sectype_ioctl(authref, ARDP_SEC_YOU, 1)
+	ardp_sectype_ioctl(authref, ARDP_SEC_YOU, 0)
+
+
+One may request privacy protection. It only makes sense to request
+privacy protection for an authenticator if there are multiple
+authentications performed.  (There is a chicken-and-egg problem here;
+privacy only works if you have a shared secret, which implies some
+sort of authenticator as an indication of the nature of the shared
+secret.) 
+
+For example, I might send you a message which I've signed with
+Kerberos. However, I don't want anybody to know that I'm your friend,
+so I  encrypt the whole signed message (including my Kerberos
+authenticator) using your PGP public key.  At this point, the
+authenticator for the encryption would be your PGP public key, or a
+statement that I used your PGP public key to do the encryption.  The
+authenticator is (and must be) unencrypted.  
+
+> ardp_sectype_ioctl(authref, ARDP_SEC_PRIVACY, 1);
+> ardp_sectype_ioctl(authref, ARDP_SEC_PRIVACY, 0);
+
+The authenticator itself will normally be integrity protected if
+integrity protection is used.  (see discussion of integrity protection
+below.)
+
+[ Future development of API, if anybody expresses a need for it: There
+is no way to turn this off, but turning it on makes sense, because it
+means that it should be an error if you can't do the protection as
+requested. No interface provided yet because not clear that there is
+really a need for this.  ]
+
+[IMPLEMENTATION NOTE: the ARDP_SEC_PRIVACY ioctl is not yet supported
+	 as of 1/13/98, due to the lack of demand for it
+	and the pressure of other implementations.   However, it forms
+	part of our architecture.
+		--swa@ISI.EDU, katia@ISI.EDU ] 
+
+INTEGRITY:
+
+> ardp_sectype *integref;
+
+> ardp_req_security(req, ardp_sec_integrity_kerberos, &integref, 
+	/* Arguments specific to ardp_sec_integrity_kerberos */
+	authref);
+
+INTEGREF is a handle to the integrity block; used to set further
+options if necessary.  If you didn't want to set any further options,
+you may use NULL.
+
+We need to refer to a previously specified authentication block
+because there may be several parallel authentication blocks, and
+Kerberos integrity needs authentication in order to compute the
+integrity checksum.
+
+(That is why the AUTHREF argument is needed to
+ardp_sec_integrity_kerberos.  Some forms of integrity checking, such
+as ardp_sec_integrity_crc_checksum, will not need any reference to a
+previous authentication context.)
+
+> ardp_req_security(req, ardp_sec_integrity_crc, &integref);
+
+An IOCTL:
+
+> ardp_sectype_ioctl(integref, ARDP_SEC_PRIVACY, 1);
+or
+> ardp_sectype_ioctl(integref, ARDP_SEC_PRIVACY, 0);
+
+This ioctl indicates that, if any encryption is performed, this
+integrity security context block should be (1) inside (or (0) outside)
+the domain of the encryption.
+
+The ARDP_SEC_ME, ARDP_SEC_YOU, and ARDP_SEC_CRITICALITY IOCTLs are
+also applicable.  Criticality is off by default.  Good practice is to
+explicitly set ARDP_SEC_CRITICALITY and not rely on the default.
+
+
+PRIVACY protection (ENCRYPTION):
+
+Similarly, we might specify encryption:
+
+> ardp_sectype *encryptref;
+
+> ardp_req_security(req, ardp_sec_kerberos_encryption, &encryptref, 
+	/* Arguments specific to ardp_sec_kerberos_encryption */
+	authref)
+
+The ARDP_SEC_ME, ARDP_SEC_YOU, and ARDP_SEC_CRITICALITY IOCTLs are
+applicable.   Criticality is on by default.
+Criticality is always true for a block with ARDP_SEC_ME set.
+
+Good practice is to explicitly set ARDP_SEC_CRITICALITY and not rely
+on the default.
+
+LABELS:
+
+The current LABEL type defined and implemented is
+ARDP_SEC_LABEL_CLASS_OF_SERVICE.  Also reserved are
+ARDP_SEC_LABEL_PICS and ARDP_SEC_LABEL_COPYRIGHT_TAGS.
+ARDP_SEC_LABEL_COPYRIGHT_TAGS are part of ISI's SOAP research project;
+they are not described here.  (Primary work on these tags is being
+done by Dino Kutsikos <kutsikos@ISI.EDU>.)
+
+Class of service tags, a type of label, are NAME/VALUE pairs.  They
+are null-terminated strings.  
+
+They might be inside the domain of the privacy-protected (encrypted)
+security block or outside its domain.  These are user specified.
+
+If encryption has been requested, the labels will be inside the
+encryption by default, unless otherwise specified by the user.
+
+If integrity protection has been requested for the message, the labels
+will also normally be integrity protected.
+
+SPECIAL CASE:
+
+A special case occurs here, however: if integrity is
+specified as being wrapped inside encryption, and some labels are
+outside the encryption, then the integrity protection cannot apply to
+the labels which are outside the encryption.
+
+To elaborate all cases:
+
+   No integrity specified: Labels not integrity protected.
+
+   Integrity specified:
+      Labels with ARDP_SEC_PRIVACY set to 1:  Labels integrity protected
+      Labels with ARDP_SEC_PRIVACY set to 0: 
+        Integrity with ARDP_SEC_PRIVACY set to 1: Labels not integrity protected
+        Integrity with ARDP_SEC_PRIVACY set to 0: Labels integrity protected.
+
+This special case results from our decision that INTEGRITY will
+normally be only on or off; the API provides no way (except in the limited
+case of setting ARDP_SEC_PRIVACY option for a particular security
+context block) to make integrity protection apply to just a part of
+the message. 
+
+END SPECIAL CASE.
+
+To create class of service tags:
+
+> ardp_sectype *cosref;
+
+> ardp_req_security(req, ardp_sec_label_class_of_service, &cosref,
+	/* ardp_sec_class_of_service-Specific arguments: */
+	"TAGNAME", "TAGVALUE");
+
+These ioctls may be applied to each block containing labels:
+
+> ardp_sectype_ioctl(cosref, ARDP_SEC_PRIVACY, 1)
+> ardp_sectype_ioctl(cosref, ARDP_SEC_PRIVACY, 0)
+
+The ARDP_SEC_PRIVACY ioctl is only relevant if privacy is requested for
+the message, using a call to:....
+
+ > ardp_req_security(req, ARDP_SEC_PRIVACY_xxxxx, ....);
+
+This interface allows some labels to be privacy protected and others
+not.  This is a deliberate design feature.
+###########
+
+Implementation ideas:
+
+Work (such as getting the authenticator) should be done as soon as
+possible, so that errors can be easily associated with the requests
+that triggered them.
+

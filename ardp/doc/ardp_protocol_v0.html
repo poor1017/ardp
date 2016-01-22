@@ -1,0 +1,225 @@
+<TITLE>Fields in the ARDP header (Version 0)</TITLE>
+<H2>Fields in the ARDP header (Version 0)</H2>
+
+
+<H4>Octet 0</H4>
+ Version and header length: High order two bits are ARDP
+version number mod 4 (this is version 0). Low order six bits are the
+header length including octet 0.\footnote{The length of the total
+packet, including data, is available via the UDP layer, as are the
+port and IP address of the sending host.}
+
+<H4>Octets 1--2</H4>
+Connection ID: Defaults to zero.  It must be
+specified in the response to any request that specified a non-zero
+connection ID.
+
+<H4>Octets 3--4</H4>
+Packet number: Defaults to 1 if not specified. A specified
+value of 0 indicates an unsequenced control packet which should not
+be passed to the application.   Note that unsequenced control packets
+cannot request acknowledgements, nor is there any way for the sender
+of such a packet to be sure that they have arrived.
+
+<H4>Octets 5--6</H4>
+Total number of packets in this message:   Defaults
+to 0 if not known, or retains current value if it was provided in any
+earlier messages.  If the packet number was also not specified, then
+it defaults to 1.  A specified value of 0 means use the default.
+
+<H4>Octets 7--8</H4>
+Received through:   Sequence number through which
+all packets have been received by the sender of this packet.  Defaults
+to current value if specified in previous message. Defaults to 0
+otherwise.  The recipient's count of packets received through is
+normally monotonically increasing; this keeps the count from being set
+backwards in case an out-of-order packet is received.  However, if the
+``reset received through'' option (option 2) is specified in octet 12, then it
+means reset to 0 (i.e. it forgot or lost the earlier messages).  More
+generally, specifying any explicit value for this field along with the
+``reset received through'' option resets the peer's count, possibly
+backwards.  The recipient should not set its internal value of this
+field backwards unless the ``reset received through'' option is set.
+
+<H4>Octets 9--10</H4>
+Wait (expected time till response): Defaults to
+current value. Specified value of 0 means revert to client-specified
+backoff algorithm.  Specifying a non-zero value lets the
+client know that a request might not be processed for some time and
+that the client should not retry the request until the specified time.
+The client may retry sooner if it believes
+messages are available which have been missed (e.g., gaps in the list
+of received packets).  This is an unsigned
+quantity, measured in seconds, in network octet order (i.e., octet 9 is
+more significant than octet 10).  A specified value of 65,535
+(\(\mbox{FFFF}_{16}\); 
+all bits turned on) means greater than or equal to 65,535 seconds
+until the next packet.  (We do not expect that this value will ever be
+used, but it is defined for the sake of completeness.)   
+
+The client, in its messages, always sets this field to zero.
+
+<H4>Octet 11</H4>
+Flags: Octet 11 is a bit vector specifying option flags.
+The flags may themselves require additional
+fields specific to the flag.  These fields appear at the end of the
+header in the order they are needed when reading flags from the low
+order bit to the high order bit, followed by any extra fields needed
+by the flag specified by the 12th octet.  
+
+
+<TABLE BORDER>
+  <CAPTION>Value of flags for octet 11 </CAPTION>
+  <TR><TH ROWSPAN=1>Bit No.<TH>Meaning<TH>Additional Fields 
+  <TR><TD>0<TD>Additional Address Information Follows<TD>variable length (see below)
+  <TR><TD>1<TD>Priority Follows<TD>2 octets (see below)
+  <TR><TD>2<TD>A Protocol ID for a higher-level protocol follows<TD>2
+octets (see below)
+  <TR><TD>3<TD>Window size<TD>
+  <TR><TD>4-5<TD>Unused<TD>Unused  
+  <TR><TD>6<TD>This packet is a sequenced control packet only; it  <br>should not be returned to the application by the  <br> ARDP library<TD>None
+  <TR><TD>7 (high order)<TD>Please Acknowledge this Packet<TD> None
+</TABLE>
+
+<P>
+
+<H4>Octet 12</H4>
+ <!hr size="4"!>
+ <!hr size="5"!>
+ <!hr size="8"!>
+<TABLE BORDER>
+  <CAPTION>Value of options for octet 12 </CAPTION>
+  <TR><TH ROWSPAN=1>Value<TH>Meaning<TH>Additional Fields 
+
+  <TR><TD>0<TD>No Option Specified<TD>None
+  <TR><TD>1<TD>Client to server: Cancel Request. Server to  <br>client: Connection refused. <TD>None 
+
+  <TR><TD>2<TD>Reset peer's received-through count.<TD>Specified in octets 7-8
+
+  <TR><TD>3<TD>Packets received beyond received-through <TD> The rest
+of the header after additional data for octet 11 flags is an arbitrary
+number of octets.  These are bit-vectors specifying which packets
+beyond the received-through specified in this packet have been
+received by the sender of this packet.  For example, if the
+received-through is set to 43, then we know that packet 44 has not
+been received.  The low order bit of the first octet of the additional
+field will be turned on if packet 45 has been received, and off if it
+has not.  The high-order bit will be turned on if packet 52 has been
+received, and off if it has not.  Similarly, the low-order bit of the
+second octet of additional information will be turned on if packet 53
+has been received, and so on.  The recipient of this information may
+choose to ignore it and use a simpler resend strategy.  Similarly,
+this information is never required to be sent.
+
+  <TR><TD>4<TD> Redirect (used by servers):The client should send any
+unacknowledged packets already sent and all subsequent packets in this
+message to a new addresss.  This is designed to be used as a
+load-shedding device.  In one common case, this will be the entire
+response a server gives to a request, and the client will resend the
+entire request to a new server; in the other common case, this will be
+used in conjunction with option 6 or 7. <TD>  6 octets.  The first 4
+octets are the IP address of the new server, in network byte order.
+The next 2 octets are the UDP port to which the request should be
+sent, also in network byte order.
+
+  <TR><TD>5<TD> Redirect and notify (used by servers). Like option 4, but
+the client's network layer should also notify its caller that all
+subsequent requests intended for the old server should be sent to the
+new server instead. <TD> Same as option 4.
+
+  <TR><TD>6<TD> Forwarded: This request was received from a
+client, and the sender is a server forwarding it to the recipient for
+processing.   The recipient should pretend that it received this
+message from the sender indicated by the additional fields, not from
+the real sender of this message.  (If implemented, this request should be accepted only
+from one of a group of trusted hosts.)   This option is intended to be
+used by a central server which distributes requests to several subsidiary
+servers which do the actual work of processing the request, but which
+use the central server as  a contact point.  Presumably, it is cheaper
+for the central server to forward the request to the subsidiary
+servers over a local area network rather than for the client (who may
+be quite far away) to retransmit it.    The central server has done
+the job of notifying the original client (through option 4 or 5) that
+further requests and retransmissions should go to the new server.
+<TD>6 octets: The IP address and port of the original sender of
+this message, as in number 4.
+
+<TD>
+
+  <TR><TD>7<TD>Forwarded; Please notify: Like option 6, but the
+receiving server should notify the client of the switch (through
+option 4 or 5)<TD>6 octets: The IP address and port of the original
+sender of this message, as in number 4.
+
+  <TR><TD>8<TD>ARDP version obsolete: We get this message when the peer knows we are using an ARDP version that it does not understand.  This message is only sent in response to an outstanding ARDP request.  This is the version-specific BAD-VERSION message.   The ARDP peer can only send this back if it knows enough about the recipient's ARDP version so that it can recognize the version information in the BAD-VERSION message recipient's original message.  If the peer doesn't recognize the original message's version, then it sends back a version-independent BAD-VERSION message.  (This is a message whose first octet is zero.)
+<TD>none
+
+  <TR><TD>9-252<TD>Undefined<TD>Undefined
+  
+  <TR><TD>253<TD>Request Queue Status<TD> 1 octet.  If bit 0 (low order) is
+set, the position in the queue is requested.  If bit 1 is set, the
+estimated time until this request will be completed is requested.  The
+recipient may ignore this option.
+
+  <TR><TD>254<TD>Response to 253.<TD>1 octet of flags, followed by 1 or 2 additional
+fields.  If bit 0 (low order) of the flags is set, the position in the
+queue is returned as a 2 octet network byte order representation of an
+unsigned quantity.  A value of  \hexnum{FFFF} (all bits turned on) means 
+a queue position of \hexnum{FFFF} or further.  (We do not expect this
+value to ever be used, but it is included for the sake of
+completeness.)  If bit 1 of the flags is set, the estimated 
+time until this request will be completed is returned as a  4-octet
+network byte order unsigned value, representing a time in seconds.  A
+value of \hexnum{FFFFFFFF} (all bits turned on) means a time of
+\hexnum{FFFFFFFF} seconds or more.  (We do not expect this to ever be 
+used).
+
+  <TR><TD>255<TD> Reserved for future expansion.<TD>Undefined
+</TABLE>
+<hr size="8">
+
+<H4>Octets 13 and above</H4>
+
+Fields specific to particular flags and options. <P>
+
+First, additional data fields  specific to the flags in octet 11
+should be specified. <P>
+
+<H4>Next Octets</H4>
+
+Additional Address Information (if Additional
+Address Information flag specified):  The first octet specifies the
+type of additional address information.  The next octet specifies the
+length of the address information, from 0 to 255 octets.The
+entire 255 octets are not available for address information, since they
+are part of the header, and the maximum header length header is
+limited to 64 octets. <P>
+
+Its length does not include the two octets that specify type and
+length.  The following octets contain the address information itself,
+and its format is dependent upon the type of address information.
+
+<H4>Next 2 octets</H4>
+Priority (if Priority flag specified): <br>
+These octets are a signed integer representing the priority of the
+request.  Not all implementations understand this message, and many
+that do will not honor requests for expedited handling.  Negative
+numbers indicate expedited handling while higher numbers indicate
+greater delays.  A priority of 0 is normal.  Implementation detail:
+the priority is currently tagged onto all packets sent; this isn't
+necessary, but it's easy. <P>
+
+<H4>Next 2 octets</H4>
+
+Protocol ID (if Protocol ID flag specified):
+These octets identify the interpretation of the data carried in the
+packet.  The default, or an explicitly specified value of 0,  mean
+that it is not specified, but has been agreed upon externally (i.e.
+the applications will know).  <P>
+
+<H4>Next octets</H4>
+
+Any data specific to the option set by octet 12
+should be specified.  This is the data specified in the ``additional
+fields'' column of the table ``Value of flags for octet 12.'' <P>
+

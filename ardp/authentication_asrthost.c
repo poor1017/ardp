@@ -24,7 +24,7 @@
 #include <stddef.h>		/* for NULL */
 #include <stdarg.h>		/* for va_arg */
 #include <unistd.h>		/* getuid(), getreuid() */
-#include <malloc.h>		/* prototype of free(); used internally by
+#include <sys/malloc.h>		/* prototype of free(); used internally by
 				   <krb5.h>   */
 
 
@@ -34,7 +34,7 @@ static enum ardp_errcode aa_parse_args(RREQ req, struct ardp__sectype *secref,
 static enum ardp_errcode aa_prep(struct ardp__sectype *secref);
 
 
-ardp_sectype ardp_sec_authentication_asrthost = {
+const ardp_sectype ardp_sec_authentication_asrthost = {
     UNINITIALIZED,
     ARDP_SEC_AUTHENTICATION,	/* .service */
     ARDP_SEC_AUTHENTICATION_ASRTHOST, /* .mechanism */

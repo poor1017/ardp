@@ -23,7 +23,7 @@ static enum ardp_errcode parse_crc_args(RREQ req, ardp_sectype *ref,
 					va_list ap);
 static enum ardp_errcode v_integrity_crc_commit(RREQ req, ardp_sectype *s);
 
-ardp_sectype ardp_sec_integrity_crc = {
+const ardp_sectype ardp_sec_integrity_crc = {
     UNINITIALIZED,
     ARDP_SEC_INTEGRITY,		/* .service. */
     ARDP_SEC_INTEGRITY_CRC,	/* .mechanism. */

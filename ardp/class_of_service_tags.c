@@ -48,13 +48,13 @@ v_class_of_service_tags_parse_arguments(RREQ GL_UNUSED_C_ARGUMENT req,
     char *tagname = va_arg(ap, char *);
     char *value = va_arg(ap, char *);
     if (tagname) {
-	s->mech_spec[COS_LABEL] = stcopy(tagname);
+	s->mech_spec[COS_LABEL].ptr = stcopy(tagname);
     } else {
 	s->processing_state = ARDP__SEC_PREP_FAILURE;
 	return ARDP_FAILURE;
     }
     if (value)
-	s->mech_spec[COS_VALUE] = stcopy(value);
+	s->mech_spec[COS_VALUE].ptr = stcopy(value);
 	s->processing_state = ARDP__SEC_PREP_SUCCESS;
     return ARDP_SUCCESS;
     
@@ -100,9 +100,9 @@ ardp__sec_extract_class_of_service_tags(
     costag cos_tag;
     cos_tag = ardp_cos_alloc();
 
-    namelen = strnlen(arg, arglen);
+    namelen = gl_strnlen(arg, arglen);
     if (namelen >= arglen) {
-	GL_STFREE((char *) cos_tag);
+	GL_STFREE(cos_tag);
 	
 	return ARDP_FAILURE;
     }    
@@ -110,7 +110,7 @@ ardp__sec_extract_class_of_service_tags(
     /* +1 so we skip over the null byte terminating the string. */
     arg += namelen + 1, arglen -= (namelen + 1);
 
-    vallen = strnlen(arg, arglen);
+    vallen = gl_strnlen(arg, arglen);
     if (vallen >= arglen) {
 	/* In this case, we encountered a bogus argument -- it was not
 	   NULL-terminated.  We fix this by simply assigning to NULL. */

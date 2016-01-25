@@ -65,7 +65,9 @@ ardp__sec_add2secdata4req(RREQ req, int flags, const void *buf, int buflen)
     /*     pkt->text = pkt->ioptr; */
     pkt->length = pkt->ioptr - pkt->start;
     if(written != buflen) {
-	((char *) buf) += written;
+    char* temp = (char*) buf;
+    temp += written;
+    buf = temp;
 	buflen -= written;
 	goto keep_writing;
     }

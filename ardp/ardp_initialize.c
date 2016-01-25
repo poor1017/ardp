@@ -67,7 +67,7 @@ ardp_initialize(void)
 #endif
 
 #ifndef ARDP_STANDALONE
-    p_read_config("ardp", &ardp_config, ardp_config_table);    
+    p_read_config("ardp", &(ardp_config.default_peer), ardp_config_table);    
 #endif
 
 #ifdef GL_THREADS
@@ -114,7 +114,7 @@ struct ardp_config_type ardp_config = {
 #ifndef ARDP_STANDALONE
 /* Table of Standard Ardp Configuration Titles, Types and Defaults */
 /* This is used by the pconfig routines. */
-p_config_query_type ardp_config_table[] = {
+static p_config_query_type ardp_config_table[] = {
     {"default_peer", P_CONFIG_STRING, ARDP_DEFAULT_PEER_DEFAULT},
     {"default_port", P_CONFIG_INT, (char *)ARDP_DEFAULT_PORT_DEFAULT},
     {"default_timeout", P_CONFIG_INT, (char *)ARDP_DEFAULT_TIMEOUT_DEFAULT},

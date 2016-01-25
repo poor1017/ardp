@@ -244,24 +244,39 @@ p_read_config(const char *prefix, void *p_config_struct,
         if (value_string) {
             switch (p_config_table->value_type) {
             case P_CONFIG_INT:
-                sscanf(value_string, "%d", ((int *)p_config_struct)++);
+            {
+                int* temp = (int*)p_config_struct;
+                sscanf(value_string, "%d", temp);
+                ++temp;
+                p_config_struct = temp;
                 break;
+            }
             case P_CONFIG_BOOLEAN:
-                *((int *)p_config_struct)++ = 
-                    !strcasecmp(value_string, "true") ? TRUE :
-                    !strcasecmp(value_string, "false") ? FALSE :
-                    (int)p_config_table->default_value;
+            {
+                int* temp = (int*)p_config_struct;
+                *temp = !strcasecmp(value_string, "true") ? TRUE :
+                        !strcasecmp(value_string, "false") ? FALSE :
+                        (int)p_config_table->default_value;
+                ++temp;
+                p_config_struct = temp;
                 break;
+            }
             case P_CONFIG_PATH:
-                *((char **)p_config_struct) = p_parse_path_stcopyr(
-                    value_string, *((char **)p_config_struct)); 
-                ((char **)p_config_struct)++;
+            {
+                char** temp = (char**)p_config_struct;
+                *temp = p_parse_path_stcopyr(value_string, *temp);
+                ++temp;
+                p_config_struct = temp;
                 break;
+            }
             case P_CONFIG_STRING:
-                *((char **)p_config_struct) = stcopyr(value_string,
-                    *((char **)p_config_struct));
-                ((char **)p_config_struct)++;
+            {
+                char** temp = (char**)p_config_struct;
+                *temp = stcopyr(value_string, *temp);
+                ++temp;
+                p_config_struct = temp;
                 break;
+            }
             default:
                 internal_error("Invalid Configuration Value Type");
             }
@@ -270,21 +285,29 @@ p_read_config(const char *prefix, void *p_config_struct,
             switch (p_config_table->value_type) {
             case P_CONFIG_INT:
             case P_CONFIG_BOOLEAN:
-                *((int *)p_config_struct)++ = 
-                    (int)p_config_table->default_value;
+            {
+                int* temp = (int*)p_config_struct;
+                *temp = (int)p_config_table->default_value;
+                ++temp;
+                p_config_struct = temp;
                 break;
+            }
             case P_CONFIG_PATH:
-                *((char **)p_config_struct) = p_parse_path_stcopyr(
-                   (char *)p_config_table->default_value,
-                   *((char **)p_config_struct));
-                ((char **)p_config_struct)++;
+            {
+                char** temp = (char**)p_config_struct;
+                *temp = p_parse_path_stcopyr((char *)p_config_table->default_value, *temp);
+                ++temp;
+                p_config_struct = temp;
                 break;
+            }
             case P_CONFIG_STRING:
-                *((char **)p_config_struct) = stcopyr(
-                   (char *)p_config_table->default_value,
-                   *((char **)p_config_struct));
-                ((char **)p_config_struct)++;
+            {
+                char** temp = (char**)p_config_struct;
+                *temp = stcopyr((char *)p_config_table->default_value, *temp);
+                ++temp;
+                p_config_struct = temp;
                 break;
+            }
             default:
                 internal_error("Invalid Configuration Value Type");
             }
@@ -435,7 +458,7 @@ in_config_line_GSP(INPUT in, char **linep)
         qscanf(in, "%~%R", in, in->u.c.dat, in->u.c.datsiz);
         if (in_eof(in))
             return EOF;
-    } while isspace(*(in->u.s.s));   /* skip blank lines */
+    } while ( isspace(*(in->u.s.s)) );   /* skip blank lines */
 
 #if 0
     /* This piece can't support multiple lines of configuration with */

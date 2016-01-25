@@ -17,18 +17,10 @@ extern char *stcopyr(const char *, char *);
 /* The prototype immediately preceding another prototype?  This is weird but
    will work. */
 extern char * stcopy_GSP(const char *s, char **gp);
-extern inline char * 
-stcopy_GSP(const char *s, char **gp)
-{
-    if (gp)
-	return *gp = stcopyr(s, *gp);
-    else
-	return stcopy(s);
-};
 extern void stfree(void *s);
 extern int string_count;
 extern int string_max;
-extern size_t strnlen(const char s[], const int maxdist);
+extern size_t gl_strnlen(const char s[], const int maxdist);
 extern size_t vqsprintf(char *buf, size_t buflen, const char fmt[], va_list);
 extern char *vqsprintf_stcopyr(char *buf, const char *fmt, va_list ap);
 extern char *vqsprintf_GSP(char **bufp, const char *fmt, va_list ap);
@@ -99,11 +91,6 @@ void p_bst_set_buffer_length_explicit(char *buf, int buflen);
 void p_bst_set_buffer_length_nullterm(char *buf, int buflen);
 #ifdef __GNUC__
 extern inline void gl_set_bstring_length(char *bstr, size_t len);
-extern inline void
-gl_set_bstring_length(char *bstr, size_t len)
-{
-    p__bst_length_fld(bstr) = len;
-}
 #else
 #define gl_set_bstring_length(bstr, len) p_bst_set_buffer_length_explicit((bstr), (len))
 #endif

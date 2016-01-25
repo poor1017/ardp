@@ -265,9 +265,7 @@ void child_process(int num_loops)
 /* 	    get_data(req, stdout); */
 	} else {
 	    if (req->status == ARDP_STATUS_ACTIVE) {
-		rfprintf(stderr, "REQUEST pending.  (This should not happen in
-this sample client, since we are running in the standard synchronous mode.)  Aborting\n
-");
+		rfprintf(stderr, "REQUEST pending.  (This should not happen in this sample client, since we are running in the standard synchronous mode.)  Aborting\n");
 		exit(1);
 	    } else {
 		rfprintf(stderr, "client: This shouldn't happen: ardp_send \

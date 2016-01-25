@@ -182,14 +182,11 @@ ardp_accept_and_wait(int timeout_sec, int timeout_usec)
 	/* Modified further to work with egim too  -- swa, 7/11/96 */
         if (errno == EBADF || errno == ENOTSOCK) {/* #s 9 and 38 */
             if ((ardp_prvport >= 0) && FD_ISSET(ardp_prvport, &readfds))
-                ardp__log(L_NET_ERR, NOREQ, "The bad descriptor was descriptor #%d,
-represented internally by the variable ardp_prvport", ardp_prvport);
+                ardp__log(L_NET_ERR, NOREQ, "The bad descriptor was descriptor #%d, represented internally by the variable ardp_prvport", ardp_prvport);
             else if (FD_ISSET(ardp_srvport, &readfds))
-                ardp__log(L_NET_ERR, NOREQ, "The bad descriptor was descriptor #%d,
-represented internally by the variable ardp_srvport", ardp_srvport);
+                ardp__log(L_NET_ERR, NOREQ, "The bad descriptor was descriptor #%d, represented internally by the variable ardp_srvport", ardp_srvport);
             else
-                internal_error("Something is wrong with your system's version
-of select().  No descriptors are readable; unclear how we got here.");
+                internal_error("Something is wrong with your system's version of select().  No descriptors are readable; unclear how we got here.");
 
             ardp__log(L_NET_ERR, NOREQ, 
                  "This should never happen.  Giving up.");

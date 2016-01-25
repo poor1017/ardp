@@ -1,0 +1,48 @@
+a. request ID: cid
+b. packet ID: seq
+
+1. server get req from ardp_pendingQa
+2. if receive and parse a request, check to see if it is already on done, partial, or pending
+3. if the current request is not complete, check the ardp_partialQ to find the rest of the request
+4. if it is the first packet received in the request, and need ack, ack it
+5. add the current packet to the current request packet list
+6. add the current packet to the end of ardp_partialQ, if exceed the window(20), remove from head
+7. continue receive packet until request complete
+8. remove from ardp_partialQ, check ardp_runQ for duplicate, add to ardp_pendingQ
+9. receive a duplicate request, 
+    a. check ardp_doneQ first if discard it
+    b. check ardp_partialQ to comprise the complete request and check duplicate
+    ---------- request complete ---------
+    c. check ardp_runQ, discard the duplicate request
+    d. check ardp_pendingQ, discard the duplicate request
+
+
+1. construct request from msg buffer, add the completed 'sec' packets to the existing msg
+2. add the current request to ardp_activeQ
+3. send packets one by one, update send_num
+4. receive reply, look for the request on ardp_activeQ and remove from ardp_activeQ, add the request to ardp_completeQ
+5. not receive reply, if the request need ack, just send ack immediately
+6. receive reply time out, half window and retransmit the request, retry count exceed, remove the request
+5. if ->seq == 0 (unsequenced control packet), if received_through is smaller than send_num, then retransmit
+
+
+accept:
+1. construct request
+2. check on ardp_doneQ
+3. check on ardp_partialQ
+    1. update prcvd_thru
+    2. 
+
+
+prcocess active:
+1. select again and again
+2. nothing to receive, check for timeouts
+    a. need ack, send ack without data
+    b. timeout and retry count is not 0
+        1. shrink the window to half
+        2. reset the head of all packets in the request, the last ack, prcvd_thru + window_sz == seq ack
+        3. update timeout
+        4. send the request
+    c. count is 0, clean
+3. receive the reply
+4. 

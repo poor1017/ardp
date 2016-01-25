@@ -46,6 +46,14 @@
 #define      ARDP_BACKOFF(x)   (2 * x)   /* (C)Backoff algorithm               */
 #define	     ARDP_PTXT_HDR	    64   /* (CS)Max offset for start            */
 #define	     ARDP_PTXT_LEN	  1250   /* (CS)Max length for data to send     */
+
+/*
+ * By chenyu
+ * If I set ARDP_PTXT_LEN smaller than the length of the last two parameters of ardp_req_security(),
+ * a crash will occur when call function 'strcat' in ardp__sec_add2secdata4req(), the author wanted
+ * to cut the string and keep writting, but he mistake 'strcat'.
+ */
+
 #define	     ARDP_PTXT_LEN_R	  1405	 /* (CS)Max length for received data    */
 
 /* Rationale for MAX_PTXT_LEN_R: According to IEEE std. 802.5, 1492 is the  */
@@ -744,6 +752,7 @@ extern pthread_mutex_t p_th_mutexARDP_SELFNUM; /* declared in ardp_mutexes.c */
 
 /* Ardp Configuration Structure */
  /* Documented in doc/working_notes/pconfig* */
+#pragma pack(4)
 extern struct ardp_config_type {
     char                        *default_peer;
     int				default_port;
@@ -782,6 +791,7 @@ extern struct ardp_config_type {
        changing kerberos_srvtab too. */
     char			*kerberos_srvtab;
 } ardp_config;
+#pragma pack()
 
 
 /* These set defaults used in the structure above. */

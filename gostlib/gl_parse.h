@@ -140,53 +140,9 @@ extern int vqscanf(INPUT in, const char fmt[], va_list ap);
    gl_qsscanf(), gl_qslscanf(), gl_qbscanf()
  */
 
-GL_INLINE_EXTERN int NO_SIDE_EFFECTS in_readc(constINPUT in);
-/* Returns the distinguished value (from <stdio.h>) EOF if the end of the input
-   is detected. */
-GL_INLINE_EXTERN int 
-NO_SIDE_EFFECTS
-in_readc(constINPUT in)
-#ifndef GL_INLINE_GET_FUNCTION_BODY
-    ;
-#else
-{
-    switch(in->sourcetype) {
-    case GL__IO_BSTRING:
-	return in->u.s.s < in->u.s.pastend ? *(in->u.s.s) : EOF;
-    case GL__IO_CALLERDEF:
-	return (in->u.c.readc)(in);
-    default:
-        internal_error("invalid in->sourcetype");
-    }
-    /* NOTREACHED */
-    return EOF; /* Unreached - keeps gcc happy */
-}
-#endif
-
-/* This function may legally be called on a stream which has already reached
-   EOF.  In that case, it's a no-op. */
+extern int NO_SIDE_EFFECTS in_readc(constINPUT in);
 
 extern void in_incc(INPUT in);
-
-GL_INLINE_EXTERN void 
-in_incc(INPUT in)
-#ifndef GL_INLINE_GET_FUNCTION_BODY
-    ;
-#else
-{
-    switch(in->sourcetype) {
-    case GL__IO_BSTRING:
-	++in->u.s.s;		/* ok to increment past the end. */
-        break;
-    case GL__IO_CALLERDEF:
-	(in->u.c.incc)(in);
-	break;
-    default:
-        internal_error("invalid in->sourcetype");
-    }
-}
-
-#endif
 
 /*
  * Returns EOF if EOF has been reached (non-zero; C true).
@@ -196,14 +152,6 @@ in_incc(INPUT in)
  * 9/97: Will have to test this.
  */
 extern int NO_SIDE_EFFECTS in_eof(constINPUT in);
-GL_INLINE_EXTERN int NO_SIDE_EFFECTS in_eof(constINPUT in)
-#ifndef GL_INLINE_GET_FUNCTION_BODY
-    ;
-#else
-{
-    return (in_readc(in) == EOF) ? EOF : 0;
-}
-#endif
 
 
 #if 0

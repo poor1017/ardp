@@ -301,10 +301,7 @@ timeout to %d.%06ld seconds; transmission window to %d packets.\n",
 		    "claimed to be v%u in response to a v0 or v1 request",
 		    firstbyte - 128);
 	    if (ardp_debug >= 2)
-		rfprintf(stderr, "ardp_process_active(): Received packet "
-			"; we have a confused or buggy peer.  Packet's 1st byte
-is %d, length is %d. Sender is %s.", 
-			firstbyte, pkt->length, inet_ntoa(req->peer_addr));
+		rfprintf(stderr, "ardp_process_active(): Received packet; we have a confused or buggy peer.  Packet's 1st byte is %d, length is %d. Sender is %s.", firstbyte, pkt->length, inet_ntoa(req->peer_addr));
 	}
 	ardp_ptfree(pkt);
 	EXTERN_MUTEXED_UNLOCK(ardp_activeQ);
@@ -687,9 +684,7 @@ needed but unavailable\n", pkt->seq, nbytes ); \
 			memcpy2(&stmp, ctlptr);
 			req->inf_queue_pos = ntohs(stmp);
 			if(ardp_debug >= 8) 
-			    rfprintf(stderr," (Current queue position on server i
-s %d)",
-				    req->inf_queue_pos);
+			    rfprintf(stderr," (Current queue position on server is %d)", req->inf_queue_pos);
 			ctlptr += 2;
 		    }
 		}
@@ -698,9 +693,7 @@ s %d)",
 			memcpy4(&ltmp, ctlptr);
 			req->inf_sys_time = ntohl(ltmp);
 			if(ardp_debug >= 8) 
-			    rfprintf(stderr," (Expected system time is %d seconds
-)",
-				    req->inf_sys_time);
+			    rfprintf(stderr," (Expected system time is %d seconds)", req->inf_sys_time);
 			ctlptr += 4;
 		    }
 		}
@@ -856,9 +849,8 @@ unACKed packets]",
 		memcpy2(&stmp, pkt->start+7);  
 		stmp = ntohs(stmp);
 		if (ardp_debug >= 8) 
-		    rfprintf(stderr, "[*Request to set back prcvd_thru to %d;
-accepted (old prcvd_thru = %d)*]", stmp, req->prcvd_thru);
-		req->prcvd_thru = stmp;
+		    rfprintf(stderr, "[*Request to set back prcvd_thru to %d; accepted (old prcvd_thru = %d)*]", stmp, req->prcvd_thru);
+        req->prcvd_thru = stmp;
 	    }
 	    if(rdflag12 == 1) {
 		/* ARDP Connection Refused */

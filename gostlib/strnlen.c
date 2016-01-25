@@ -19,7 +19,7 @@
 
 
 size_t
-strnlen(const char s[], const int maxdist)
+gl_strnlen(const char s[], const int maxdist)
 {
     const char *sp = s;
     while (*sp && (sp < s + maxdist))

@@ -21,7 +21,7 @@
    unavailable.  Probably most BSD-derived systems don't contain
    it? --swa, 1/13/98. */
 
-extern int sys_nerr;
+extern __const int sys_nerr;
 extern const char *const sys_errlist[];
 
 #endif /* HAVESTRERROR */

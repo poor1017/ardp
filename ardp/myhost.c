@@ -116,7 +116,7 @@ trybigger:
 	    myhname); /* failure */
     }
     /* Confirm that this was enough space. */
-    if (strnlen(myhname, p_bstsize(myhname)) == p_bstsize(myhname)) {
+    if (gl_strnlen(myhname, p_bstsize(myhname)) == p_bstsize(myhname)) {
 	size_t newsiz = p_bstsize(myhname) + MAXHOSTNAMELEN;
 	stfree(myhname);
 	myhname = stalloc(newsiz);

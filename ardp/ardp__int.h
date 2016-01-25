@@ -15,7 +15,7 @@
 #define UFACTOR 1000000		/* convert seconds to microseconds */
 
 /* Please maintain this list in alphabetical order. */
-extern enum ardp_error (*ardp__accept)(void);
+extern enum ardp_errcode (*ardp__accept)(void);
 extern void ardp__adjust_backoff(struct timeval *tv);
 extern struct timeval ardp__gettimeofday(void);
 extern struct timeval ardp__next_activeQ_timeout(const struct timeval now);

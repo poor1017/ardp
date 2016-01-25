@@ -22,6 +22,7 @@ CFILES = ardp_debug.c \
 	gl_initialize.c \
 	gl_internal_err.c \
 	gl_mutexes.c \
+	gl_parse.c \
 	gl_set_bstring_length.c \
 	gl_set_err.c \
 	in_readc.c \

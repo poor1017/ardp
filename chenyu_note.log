@@ -46,3 +46,16 @@ prcocess active:
     c. count is 0, clean
 3. receive the reply
 4. 
+
+
+
+
+after process active, if the request is not complete, ardp will wait ttwait time beginning from completing sending
+1. ttwait -1: infinity wait
+2. ttwait 0: no wait
+3. ttwait other: the wait time
+
+1. ttwait -1, selwait_st, find the soonest until time of the active requests, use until time minus current time
+    select wait time is selwait_st.
+2. ttwait 0, return ARDP_PENDING
+3. ttwait other, exceed time, return ARDP_PENDING
